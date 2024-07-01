@@ -3,7 +3,7 @@ import copy
 import gc
 import numpy as np
 import torch
-import tqdm
+from tqdm import tqdm
 import torch.optim as optim
 import pandas as pd
 from torch.optim import lr_scheduler
