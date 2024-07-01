@@ -217,7 +217,7 @@ if __name__ == "__main__":
                            weight_decay=CONFIG['weight_decay'])
     scheduler = fetch_scheduler(optimizer, CONFIG)
 
-    model, history = run_training(model, train_loader, valid_loader, optimizer, scheduler, device=CONFIG['device'], num_epochs=CONFIG['epochs'])
+    model, history = run_training(model, train_loader, valid_loader, optimizer, scheduler, device=CONFIG['device'], num_epochs=CONFIG['epochs'], CONFIG=CONFIG)
 
     history = pd.DataFrame.from_dict(history)
     history.to_csv("history.csv", index=False)
