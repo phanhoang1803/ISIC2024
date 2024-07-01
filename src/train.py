@@ -215,7 +215,7 @@ if __name__ == "__main__":
     optimizer = optim.Adam(model.parameters(), 
                            lr=CONFIG['learning_rate'], 
                            weight_decay=CONFIG['weight_decay'])
-    scheduler = fetch_scheduler(optimizer)
+    scheduler = fetch_scheduler(optimizer, CONFIG)
 
     model, history = run_training(model, train_loader, valid_loader, optimizer, scheduler, device=CONFIG['device'], num_epochs=CONFIG['epochs'])
 
