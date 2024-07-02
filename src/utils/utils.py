@@ -17,6 +17,7 @@ def save_model(model, model_name, path):
 def parse_arguments():
     parser = ArgumentParser()
 
+    parser.add_argument('--architecture', type=str, default="EfficientNet", help='Architecture')
     parser.add_argument('--root_dir', type=str, required=True,help='Root directory of data')
     
     ### CONFIG
