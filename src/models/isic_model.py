@@ -75,21 +75,20 @@ class ISICModel_MaskRNN_GRU(nn.Module):
     
     def segment_image(self, images):
         segmented_images = []
-        for image in images:
-            if not isinstance(image, torch.Tensor):
-                transform = torchvision.transforms.ToTensor()
-                image_tensor = transform(image).unsqueeze(0)
-            else:
-                image_tensor = image.unsqueeze(0)  # Add batch dimension if not already there
+        if not isinstance(images, torch.Tensor):
+            transform = torchvision.transforms.ToTensor()
+            image_tensor = transform(images).squeeze()
+        else:
+            image_tensor = images.squeeze()  # Add batch dimension if not already there
 
-            with torch.no_grad():
-                self.mask_rnn.eval()  # Ensure Mask R-CNN is in eval mode
-                predictions = self.mask_rnn([image_tensor])
+        with torch.no_grad():
+            self.mask_rnn.eval()  # Ensure Mask R-CNN is in eval mode
+            predictions = self.mask_rnn(image_tensor)
 
-            masks = (predictions[0]['masks'] > 0.5).squeeze().cpu().numpy()
-            segmented_image = image_tensor.squeeze().cpu().numpy()
-            segmented_image = np.multiply(segmented_image, masks[0, :, :, np.newaxis])
-            segmented_images.append(torch.tensor(segmented_image))
+        masks = (predictions[0]['masks'] > 0.5).squeeze().cpu().numpy()
+        segmented_image = image_tensor.squeeze().cpu().numpy()
+        segmented_image = np.multiply(segmented_image, masks[0, :, :, np.newaxis])
+        segmented_images.append(torch.tensor(segmented_image))
 
         return torch.stack(segmented_images)
 
@@ -106,12 +105,12 @@ class ISICModel_MaskRNN_GRU(nn.Module):
             
         return features
 
-    def forward(self, image):
-        # Segment the image
-        segmented_image = self.segment_image(image)
+    def forward(self, images):
+        # Segment the images
+        segmented_images = self.segment_image(images)
         
         # Extract feature vectors from all models
-        feature_vectors = [self.extract_features(segmented_image, model) for model in self.feature_extractors]
+        feature_vectors = [self.extract_features(segmented_images, model) for model in self.feature_extractors]
         combined_features = torch.cat(feature_vectors, dim=1).unsqueeze(0)  # Add batch dimension
         
         # Classify using GRU model
