@@ -8,15 +8,15 @@ class EnsembleModel(nn.Module):
         # Load pre-trained models
         self.resnet = models.resnet50(pretrained=True)
         self.efficientnet = models.efficientnet_b0(pretrained=True)
-        self.densenet = models.densenet121(pretrained=True)
+        # self.densenet = models.densenet121(pretrained=True)
 
         # Remove the final classification layer
         self.resnet = nn.Sequential(*list(self.resnet.children())[:-1])
         self.efficientnet = nn.Sequential(*list(self.efficientnet.children())[:-1])
-        self.densenet = nn.Sequential(*list(self.densenet.children())[:-1])
+        # self.densenet = nn.Sequential(*list(self.densenet.children())[:-1])
         
         # Define the fully connected layers
-        self.fc1 = nn.Linear(2048 + 1280 + 147456, 512)
+        self.fc1 = nn.Linear(2048 + 1280, 512)
         self.fc2 = nn.Linear(512, 128)
         self.fc3 = nn.Linear(128, 1)
         
@@ -28,13 +28,13 @@ class EnsembleModel(nn.Module):
         # Extract features
         resnet_features = self.resnet(x).view(x.size(0), -1)
         efficientnet_features = self.efficientnet(x).view(x.size(0), -1)
-        densenet_features = self.densenet(x).view(x.size(0), -1)
+        # densenet_features = self.densenet(x).view(x.size(0), -1)
         
-        print(resnet_features.shape, efficientnet_features.shape, densenet_features.shape)
-        print(resnet_features.shape[1] + efficientnet_features.shape[1] + densenet_features.shape[1])
+        # print(resnet_features.shape, efficientnet_features.shape, densenet_features.shape)
+        # print(resnet_features.shape[1] + efficientnet_features.shape[1] + densenet_features.shape[1])
         
         # Concatenate features
-        features = torch.cat((resnet_features, efficientnet_features, densenet_features), dim=1)
+        features = torch.cat((resnet_features, efficientnet_features), dim=1)
         
         # Pass through fully connected layers
         x = self.relu(self.fc1(features))
