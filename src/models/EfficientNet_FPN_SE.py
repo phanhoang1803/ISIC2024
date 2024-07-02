@@ -38,7 +38,7 @@ class FPN(nn.Module):
 class EfficientNet_FPN_SE(nn.Module):
     def __init__(self):
         super(EfficientNet_FPN_SE, self).__init__()
-        self.base_model = models.efficientnet_b3(pretrained=True)
+        self.base_model = models.efficientnet_b0(pretrained=True)
         self.base_model = nn.Sequential(*list(self.base_model.children())[:-2])  # Remove the classifier and avgpool
 
         self.fpn = FPN(in_channels_list=[40, 112, 320], out_channels=256)
