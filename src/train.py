@@ -12,7 +12,9 @@ from collections import defaultdict
 from data.data_loading import load_data
 from features.dataset import ISICDataset_for_Train, ISICDataset
 from features.augmentations import get_transforms
-from models.isic_model import ISICModel, ISICModel_MaskRNN_GRU
+from models.isic_model import ISICModel
+from models.RNN_GRU_model import ISICModel_MaskRNN_GRU
+from models.EfficientNet_FPN_SE import EfficientNet_FPN_SE
 # from utils.config import CONFIG
 from utils.seed import seed_torch
 from utils.utils import make_dirs, save_model
@@ -237,7 +239,9 @@ if __name__ == "__main__":
         model = ISICModel(CONFIG['model_name'], pretrained=True, checkpoint_path=CONFIG['checkpoint_path'])
     elif CONFIG['architecture'] == 'MaskRNN_GRU':
         model = ISICModel_MaskRNN_GRU(CONFIG['model_name'], pretrained=True, checkpoint_path=CONFIG['checkpoint_path'])
-        
+    elif CONFIG['architecture'] == 'EfficientNet_FPN_SE':
+        model = EfficientNet_FPN_SE()
+    
     model.to(CONFIG['device'])
 
     
