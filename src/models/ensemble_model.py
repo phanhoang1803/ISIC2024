@@ -16,7 +16,7 @@ class EnsembleModel(nn.Module):
         self.densenet = nn.Sequential(*list(self.densenet.children())[:-1])
         
         # Define the fully connected layers
-        self.fc1 = nn.Linear(2048 + 1280 + 1024, 512)
+        self.fc1 = nn.Linear(2048 + 1280 + 147456, 512)
         self.fc2 = nn.Linear(512, 128)
         self.fc3 = nn.Linear(128, 1)
         
