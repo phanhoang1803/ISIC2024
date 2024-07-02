@@ -38,8 +38,8 @@ class FPN(nn.Module):
 class EfficientNet_FPN_SE(nn.Module):
     def __init__(self):
         super(EfficientNet_FPN_SE, self).__init__()
-        self.base_model = models.efficientnet_b0(pretrained=True)
-        self.base_model = nn.Sequential(*list(self.base_model.children())[:-2])  # Remove the classifier and avgpool
+        self.base_model = models.efficientnet_b3(pretrained=True)
+        self.base_model_features = nn.Sequential(*list(self.base_model.children())[:-2])  # Remove the classifier and avgpool
 
         self.fpn = FPN(in_channels_list=[40, 112, 320], out_channels=256)
 
@@ -56,14 +56,20 @@ class EfficientNet_FPN_SE(nn.Module):
     
     def forward(self, x):
         features = []
-        for i, layer in enumerate(self.base_model):
+        for name, layer in self.base_model.named_children():
             x = layer(x)
-            if i in {3, 4, 6}:  # Example layers from EfficientNet
+            if name in ['features.3', 'features.4', 'features.6']:  # Check the correct layers
                 features.append(x)
-        
+
+        if len(features) != 3:
+            raise ValueError("Expected 3 feature maps from EfficientNet backbone, got {len(features)}")
+
         fpn_outputs = self.fpn(features)
         se_outputs = [se_block(output) for se_block, output in zip(self.se_blocks, fpn_outputs)]
         
+        if not se_outputs:
+            raise ValueError("SE outputs are empty")
+
         x = torch.cat(se_outputs, dim=1)
         x = self.global_avg_pool(x)
         x = x.view(x.size(0), -1)
@@ -79,3 +85,4 @@ class EfficientNet_FPN_SE(nn.Module):
 # Example of how to instantiate and use the model
 # model = ISICModel()
 # print(model)
+
