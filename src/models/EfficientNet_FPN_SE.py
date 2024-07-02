@@ -49,7 +49,7 @@ class EfficientNet_FPN_SE(nn.Module):
         ])
 
         self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.fc1 = nn.Linear(256, 1024)
+        self.fc1 = nn.Linear(256 * 3, 1024)
         self.fc2 = nn.Linear(1024, 512)
         self.fc3 = nn.Linear(512, 1)
         self.dropout = nn.Dropout(0.5)
