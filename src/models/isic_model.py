@@ -93,14 +93,14 @@ class ISICModel_MaskRNN_GRU(nn.Module):
         return segmented_image
 
     def extract_features(self, images, model):
-        if not isinstance(images, torch.Tensor):
-            transform = torchvision.transforms.ToTensor()
-            image_tensor = transform(images).squeeze()
-        else:
-            image_tensor = images.squeeze()  # Add batch dimension if not already there
+        # if not isinstance(images, torch.Tensor):
+        #     transform = torchvision.transforms.ToTensor()
+        #     image_tensor = transform(images).squeeze()
+        # else:
+        #     image_tensor = images.squeeze()  # Add batch dimension if not already there
         
         with torch.no_grad():
-            features = model(image_tensor)
+            features = model(images)
             features = F.adaptive_avg_pool2d(features, (1, 1)).flatten(1)
             
         return features
