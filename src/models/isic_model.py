@@ -84,8 +84,11 @@ class ISICModel_MaskRNN_GRU(nn.Module):
             self.mask_rnn.eval()  # Ensure Mask R-CNN is in eval mode
             predictions = self.mask_rnn(image_tensor)
 
-        masks = (predictions[0]['masks'] > 0.5).squeeze().cpu().numpy()
-        segmented_image = np.multiply(images, masks[0, :, :, np.newaxis])
+        if predictions[0]['masks'].shape[0] > 0:
+            masks = (predictions[0]['masks'] > 0.5).squeeze().cpu().numpy()
+            segmented_image = np.multiply(images, masks[0, :, :, np.newaxis])
+        else:
+            segmented_image = image_tensor.squeeze().cpu().numpy()
         
         return segmented_image
 
