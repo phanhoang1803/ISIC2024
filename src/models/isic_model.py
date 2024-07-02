@@ -74,23 +74,29 @@ class ISICModel_MaskRNN_GRU(nn.Module):
         return model
     
     def segment_image(self, images):
-        if not isinstance(images, torch.Tensor):
-            transform = torchvision.transforms.ToTensor()
-            image_tensor = transform(images).unsqueeze(0)  # Add batch dimension if not already there
+        # Convert 4D tensor to a list of 3D tensors
+        if isinstance(images, torch.Tensor):
+            image_list = [images[i] for i in range(images.shape[0])]
         else:
-            image_tensor = images.unsqueeze(0)  # Add batch dimension if not already there
-
+            transform = torchvision.transforms.ToTensor()
+            image_list = [transform(img) for img in images]
+        
         with torch.no_grad():
             self.mask_rnn.eval()  # Ensure Mask R-CNN is in eval mode
-            predictions = self.mask_rnn(image_tensor)
+            predictions = self.mask_rnn(image_list)
 
-        if predictions[0]['masks'].shape[0] > 0:
-            masks = (predictions[0]['masks'] > 0.5).squeeze().cpu().numpy()
-            segmented_image = np.multiply(images.cpu().numpy(), masks[0, :, :, np.newaxis])
-        else:
-            segmented_image = image_tensor.squeeze().cpu().numpy()
+        segmented_images = []
+        for i in range(len(predictions)):
+            if predictions[i]['masks'].shape[0] > 0:
+                masks = (predictions[i]['masks'] > 0.5).squeeze().cpu().numpy()
+                segmented_image = np.multiply(image_list[i].cpu().numpy(), masks[0, :, :, np.newaxis])
+            else:
+                segmented_image = image_list[i].cpu().numpy()
+            segmented_images.append(segmented_image)
 
-        return segmented_image
+        segmented_images = np.stack(segmented_images)
+        return torch.from_numpy(segmented_images)
+
 
     def extract_features(self, images, model):
         if not isinstance(images, torch.Tensor):
@@ -106,6 +112,9 @@ class ISICModel_MaskRNN_GRU(nn.Module):
     def forward(self, images):
         # Segment the images
         segmented_images = self.segment_image(images)
+        
+        if segmented_images.ndim == 4:
+            segmented_images = segmented_images.to(images.device)  # Ensure the tensor is on the same device
         
         # Extract feature vectors from all models
         feature_vectors = [self.extract_features(segmented_images, model) for model in self.feature_extractors]
