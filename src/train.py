@@ -12,7 +12,7 @@ from collections import defaultdict
 from data.data_loading import load_data
 from features.dataset import ISICDataset_for_Train, ISICDataset
 from features.augmentations import get_transforms
-from models.isic_model import ISICModel
+from models.isic_model import ISICModel, ISICModel_MaskRNN_GRU
 # from utils.config import CONFIG
 from utils.seed import seed_torch
 from utils.utils import make_dirs, save_model
@@ -21,6 +21,21 @@ from utils.utils import parse_arguments
 from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold
 
 def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, CONFIG):
+    """
+    Trains the model for one epoch.
+
+    Args:
+        model (torch.nn.Module): The model to be trained.
+        optimizer (torch.optim.Optimizer): The optimizer used for training.
+        scheduler (torch.optim.lr_scheduler._LRScheduler, optional): The learning rate scheduler. Defaults to None.
+        dataloader (torch.utils.data.DataLoader): The data loader for the training data.
+        device (torch.device): The device where the model and data will be loaded.
+        epoch (int): The current epoch number.
+        CONFIG (dict): The configuration dictionary.
+
+    Returns:
+        tuple: A tuple containing the average loss and AUROC score for the epoch.
+    """
     model.train()
     
     dataset_size = 0
@@ -29,26 +44,32 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, CONF
     all_targets = []
     all_outputs = []
     
+    # Progress bar for tracking training progress
     bar = tqdm(enumerate(dataloader), total=len(dataloader))
+    
     for step, data in bar:
+        # Move data to device
         images = data['image'].to(device, dtype=torch.float)
         targets = data['target'].to(device, dtype=torch.float)
         
         batch_size = images.size(0)
         
+        # Forward pass
         outputs = model(images).squeeze()
         loss = criterion(outputs, targets)
         loss = loss / CONFIG['n_accumulate']
-            
+           
+        # Backward pass and optimization
         loss.backward()
-    
+   
         if (step + 1) % CONFIG['n_accumulate'] == 0:
             optimizer.step()
             optimizer.zero_grad()
 
             if scheduler is not None:
                 scheduler.step()
-                
+               
+        # Collect targets and outputs
         all_targets.append(targets.detach().cpu().numpy())
         all_outputs.append(outputs.detach().cpu().numpy())
         
@@ -57,18 +78,24 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, CONF
         
         epoch_loss = running_loss / dataset_size
         
+        # Update progress bar
         bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, LR=optimizer.param_groups[0]['lr'])
-    
+   
+    # Convert targets and outputs to numpy arrays
     all_targets = np.concatenate(all_targets)
     all_outputs = np.concatenate(all_outputs)
     
+    # Create dataframes for targets and outputs
     solution = pd.DataFrame(all_targets, columns=['target'])
     submission = pd.DataFrame(all_outputs, columns=['target'])
     
+    # Calculate AUROC score
     epoch_auroc = valid_score(solution, submission, row_id_column_name='target')
     
+    # Update progress bar
     bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, Train_Auroc=epoch_auroc, LR=optimizer.param_groups[0]['lr'])
     
+    # Collect garbage
     gc.collect()
     
     return epoch_loss, epoch_auroc
@@ -205,7 +232,11 @@ if __name__ == "__main__":
         df.loc[val_ , "kfold"] = int(fold)
     
     # Augmentation
-    model = ISICModel(CONFIG['model_name'], pretrained=True, checkpoint_path=CONFIG['checkpoint_path'])
+    if CONFIG['architecture'] == 'EfficientNet':
+        model = ISICModel(CONFIG['model_name'], pretrained=True, checkpoint_path=CONFIG['checkpoint_path'])
+    elif CONFIG['architecture'] == 'MaskRNN_GRU':
+        model = ISICModel_MaskRNN_GRU(CONFIG['model_name'], pretrained=True, checkpoint_path=CONFIG['checkpoint_path'])
+        
     model.to(CONFIG['device'])
 
     
