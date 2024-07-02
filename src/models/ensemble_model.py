@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torchvision.models as models
-from gem_pooling import GeM
+from models.gem_pooling import GeM
 
 class EnsembleModel(nn.Module):
     def __init__(self):
