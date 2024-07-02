@@ -18,7 +18,8 @@ def parse_arguments():
     parser = ArgumentParser()
 
     parser.add_argument('--architecture', type=str, default="EfficientNet", help='Architecture')
-    parser.add_argument('--root_dir', type=str, required=True,help='Root directory of data')
+    parser.add_argument('--root_dir', type=str, required=True,help='Root directory of data') # Required
+    parser.add_argument('--checkpoint_path', type=str, help='Checkpoint path') 
 
     ### Additional data
     parser.add_argument('--extra_data_dirs', type=str, nargs='*', help='List of additional directories containing training data')  
@@ -28,7 +29,6 @@ def parse_arguments():
     parser.add_argument('--epochs', type=int, default=50, help='Number of epochs')
     parser.add_argument('--img_size', type=int, default=384, help='Image size')
     parser.add_argument('--model_name', type=str, default='tf_efficientnet_b0_ns', help='Model name')
-    parser.add_argument('--checkpoint_path', type=str, required=True, help='Checkpoint path') # Required
     parser.add_argument('--train_batch_size', type=int, default=32, help='Train batch size')
     parser.add_argument('--valid_batch_size', type=int, default=64, help='Valid batch size')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='Learning rate')
