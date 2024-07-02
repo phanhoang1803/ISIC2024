@@ -74,7 +74,6 @@ class ISICModel_MaskRNN_GRU(nn.Module):
         return model
     
     def segment_image(self, images):
-        segmented_images = []
         if not isinstance(images, torch.Tensor):
             transform = torchvision.transforms.ToTensor()
             image_tensor = transform(images).squeeze()
@@ -86,18 +85,16 @@ class ISICModel_MaskRNN_GRU(nn.Module):
             predictions = self.mask_rnn(image_tensor)
 
         masks = (predictions[0]['masks'] > 0.5).squeeze().cpu().numpy()
-        segmented_image = image_tensor.squeeze().cpu().numpy()
-        segmented_image = np.multiply(segmented_image, masks[0, :, :, np.newaxis])
-        segmented_images.append(torch.tensor(segmented_image))
+        segmented_image = np.multiply(images, masks[0, :, :, np.newaxis])
+        
+        return segmented_image
 
-        return torch.stack(segmented_images)
-
-    def extract_features(self, image, model):
-        if not isinstance(image, torch.Tensor):
+    def extract_features(self, images, model):
+        if not isinstance(images, torch.Tensor):
             transform = torchvision.transforms.ToTensor()
-            image_tensor = transform(image).unsqueeze(0)
+            image_tensor = transform(images).squeeze()
         else:
-            image_tensor = image.unsqueeze(0)  # Add batch dimension if not already there
+            image_tensor = images.squeeze()  # Add batch dimension if not already there
         
         with torch.no_grad():
             features = model(image_tensor)
