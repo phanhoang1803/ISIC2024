@@ -73,22 +73,25 @@ class ISICModel_MaskRNN_GRU(nn.Module):
             model = torch.nn.Sequential(*(list(model.children())[:-1])) # Remove the classifier
         return model
     
-    def segment_image(self, image):
-        if not isinstance(image, torch.Tensor):
-            transform = torchvision.transforms.ToTensor()
-            image_tensor = transform(image).unsqueeze(0)
-        else:
-            image_tensor = image.unsqueeze(0)  # Add batch dimension if not already there
-        
-        with torch.no_grad():
-            self.mask_rnn.eval()
-            predictions = self.mask_rnn(image_tensor)
-        
-        masks = (predictions[0]['masks'] > 0.5).squeeze().cpu().numpy()
-        segmented_image = image_tensor.squeeze().cpu().numpy()
-        segmented_image = np.multiply(segmented_image, masks[0, :, :, np.newaxis])
-        
-        return segmented_image
+    def segment_image(self, images):
+        segmented_images = []
+        for image in images:
+            if not isinstance(image, torch.Tensor):
+                transform = torchvision.transforms.ToTensor()
+                image_tensor = transform(image).unsqueeze(0)
+            else:
+                image_tensor = image.unsqueeze(0)  # Add batch dimension if not already there
+
+            with torch.no_grad():
+                self.mask_rnn.eval()  # Ensure Mask R-CNN is in eval mode
+                predictions = self.mask_rnn([image_tensor])
+
+            masks = (predictions[0]['masks'] > 0.5).squeeze().cpu().numpy()
+            segmented_image = image_tensor.squeeze().cpu().numpy()
+            segmented_image = np.multiply(segmented_image, masks[0, :, :, np.newaxis])
+            segmented_images.append(torch.tensor(segmented_image))
+
+        return torch.stack(segmented_images)
 
     def extract_features(self, image, model):
         if not isinstance(image, torch.Tensor):
