@@ -224,7 +224,14 @@ if __name__ == "__main__":
     
     seed_torch(args.seed)
 
+    # Load main data (ISIC 2024)
     df = load_data(args.root_dir)
+    
+    # Load additional data if provided
+    if args.extra_data_dirs:
+        for extra_dir in args.extra_data_dirs:
+            extra_df = load_data(extra_dir)
+            df = pd.concat([df, extra_df], ignore_index=True)
     
     CONFIG['T_max'] = df.shape[0] * (CONFIG["n_fold"]-1) * CONFIG['epochs'] // CONFIG['train_batch_size'] // CONFIG["n_fold"]
     CONFIG['T_max']
@@ -247,7 +254,6 @@ if __name__ == "__main__":
     
     model.to(CONFIG['device'])
 
-    
     transforms = get_transforms(CONFIG)
     train_loader, valid_loader = prepare_loaders(df, fold=CONFIG["fold"], data_transforms=transforms, CONFIG=CONFIG)
     

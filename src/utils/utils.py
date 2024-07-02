@@ -19,6 +19,9 @@ def parse_arguments():
 
     parser.add_argument('--architecture', type=str, default="EfficientNet", help='Architecture')
     parser.add_argument('--root_dir', type=str, required=True,help='Root directory of data')
+
+    ### Additional data
+    parser.add_argument('--extra_data_dirs', type=str, nargs='*', help='List of additional directories containing training data')  
     
     ### CONFIG
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
