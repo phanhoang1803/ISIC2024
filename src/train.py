@@ -55,7 +55,10 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, CONF
         batch_size = images.size(0)
         
         # Forward pass
+        print("images.shape", images.shape)
         outputs = model(images).squeeze()
+        print("outputs.shape", outputs.shape)
+        
         loss = criterion(outputs, targets)
         loss = loss / CONFIG['n_accumulate']
            
