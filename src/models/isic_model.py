@@ -81,6 +81,7 @@ class ISICModel_MaskRNN_GRU(nn.Module):
             image_tensor = image.unsqueeze(0)  # Add batch dimension if not already there
         
         with torch.no_grad():
+            self.mask_rnn.eval()
             predictions = self.mask_rnn(image_tensor)
         
         masks = (predictions[0]['masks'] > 0.5).squeeze().cpu().numpy()
