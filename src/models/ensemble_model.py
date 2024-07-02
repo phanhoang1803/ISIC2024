@@ -30,6 +30,9 @@ class EnsembleModel(nn.Module):
         efficientnet_features = self.efficientnet(x).view(x.size(0), -1)
         densenet_features = self.densenet(x).view(x.size(0), -1)
         
+        print(resnet_features.shape, efficientnet_features.shape, densenet_features.shape)
+        print(resnet_features.shape[1] + efficientnet_features.shape[1] + densenet_features.shape[1])
+        
         # Concatenate features
         features = torch.cat((resnet_features, efficientnet_features, densenet_features), dim=1)
         
