@@ -80,10 +80,15 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, CONF
         running_loss += (loss.item() * batch_size)
         dataset_size += batch_size
         
+        # Calculate accuracy
+        preds = torch.round(torch.sigmoid(outputs))
+        running_corrects += torch.sum(preds == targets.data)
+        
         epoch_loss = running_loss / dataset_size
+        epoch_acc = running_corrects.double() / dataset_size
         
         # Update progress bar
-        bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, LR=optimizer.param_groups[0]['lr'])
+        bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, Train_Acc=epoch_acc.item(), LR=optimizer.param_groups[0]['lr'])
    
     # Convert targets and outputs to numpy arrays
     all_targets = np.concatenate(all_targets)
@@ -97,12 +102,12 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, CONF
     epoch_auroc = valid_score(solution, submission, row_id_column_name='target')
     
     # Update progress bar
-    bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, Train_Auroc=epoch_auroc, LR=optimizer.param_groups[0]['lr'])
+    bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, Train_Acc=epoch_acc.item(), Train_Auroc=epoch_auroc, LR=optimizer.param_groups[0]['lr'])
     
     # Collect garbage
     gc.collect()
     
-    return epoch_loss, epoch_auroc
+    return epoch_loss, epoch_auroc, epoch_acc.item()
 
 @torch.inference_mode()
 def valid_one_epoch(model, dataloader, device, epoch):
@@ -129,9 +134,15 @@ def valid_one_epoch(model, dataloader, device, epoch):
         running_loss += (loss.item() * batch_size)
         dataset_size += batch_size
         
-        epoch_loss = running_loss / dataset_size
+        # Calculate accuracy
+        preds = torch.round(torch.sigmoid(outputs))
+        running_corrects += torch.sum(preds == targets.data)
         
-        bar.set_postfix(Epoch=epoch, Valid_Loss=epoch_loss, LR=optimizer.param_groups[0]['lr'])   
+        epoch_loss = running_loss / dataset_size
+        epoch_acc = running_corrects.double() / dataset_size
+        
+        bar.set_postfix(Epoch=epoch, Valid_Loss=epoch_loss, Valid_Acc=epoch_acc.item(), LR=optimizer.param_groups[0]['lr'])   
+ 
     
     all_targets = np.concatenate(all_targets)
     all_outputs = np.concatenate(all_outputs)
@@ -141,11 +152,11 @@ def valid_one_epoch(model, dataloader, device, epoch):
     
     epoch_auroc = valid_score(solution, submission, row_id_column_name='target')
     
-    bar.set_postfix(Epoch=epoch, Valid_Loss=epoch_loss, Valid_Auroc=epoch_auroc, LR=optimizer.param_groups[0]['lr'])
+    bar.set_postfix(Epoch=epoch, Valid_Loss=epoch_loss, Valid_Acc=epoch_acc.item(), Valid_Auroc=epoch_auroc, LR=optimizer.param_groups[0]['lr'])
     
     gc.collect()
     
-    return epoch_loss, epoch_auroc
+    return epoch_loss, epoch_auroc, epoch_acc.item()
 
 def run_training(model, train_loader, valid_loader, optimizer, scheduler, device, num_epochs, CONFIG):
     if torch.cuda.is_available():
@@ -158,17 +169,19 @@ def run_training(model, train_loader, valid_loader, optimizer, scheduler, device
 
     for epoch in range(1, num_epochs + 1):
         gc.collect()
-        train_epoch_loss, train_epoch_pauc = train_one_epoch(model, optimizer, scheduler,
+        train_epoch_loss, train_epoch_pauc, train_epoch_acc = train_one_epoch(model, optimizer, scheduler,
                                                               dataloader=train_loader,
                                                               device=device, epoch=epoch, CONFIG=CONFIG)
 
-        val_epoch_loss, val_epoch_pauc = valid_one_epoch(model, valid_loader, device=device,
+        val_epoch_loss, val_epoch_pauc, val_epoch_acc = valid_one_epoch(model, valid_loader, device=device,
                                                           epoch=epoch)
 
         history['Train Loss'].append(train_epoch_loss)
         history['Valid Loss'].append(val_epoch_loss)
         history['Train pAUC'].append(train_epoch_pauc)
         history['Valid pAUC'].append(val_epoch_pauc)
+        history['Train Acc'].append(train_epoch_acc)
+        history['Valid Acc'].append(val_epoch_acc)
         history['lr'].append(scheduler.get_lr()[0])
 
         if best_epoch_pauc <= val_epoch_pauc:
@@ -179,8 +192,10 @@ def run_training(model, train_loader, valid_loader, optimizer, scheduler, device
             torch.save(model.state_dict(), PATH)
             print("Model Saved")
 
-        print()
-
+        print(f"Epoch {epoch}/{num_epochs} | "
+              f"Train Loss: {train_epoch_loss:.4f}, Train Acc: {train_epoch_acc:.4f}, Train pAUC: {train_epoch_pauc:.4f} | "
+              f"Valid Loss: {val_epoch_loss:.4f}, Valid Acc: {val_epoch_acc:.4f}, Valid pAUC: {val_epoch_pauc:.4f}")
+    
     end = time.time()
     time_elapsed = end - start
     print('Training complete in {:.0f}h {:.0f}m {:.0f}s'.format(
@@ -232,6 +247,9 @@ if __name__ == "__main__":
         for extra_dir in args.extra_data_dirs:
             extra_df = load_data(extra_dir)
             df = pd.concat([df, extra_df], ignore_index=True)
+    
+    print("Columns in Final DataFrame:", df.columns)
+    print("Sample data from Final DataFrame:\n", df.head())
     
     CONFIG['T_max'] = df.shape[0] * (CONFIG["n_fold"]-1) * CONFIG['epochs'] // CONFIG['train_batch_size'] // CONFIG["n_fold"]
     CONFIG['T_max']
