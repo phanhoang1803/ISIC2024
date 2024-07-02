@@ -45,4 +45,7 @@ def load_data(ROOT_DIR):
     # Filter the DataFrame based on the valid file paths
     df = df[df['file_path'].isin(train_images)].reset_index(drop=True)
 
+    # Check and remove columns containing "Unnamed"
+    df = df.drop(columns=df.columns[df.columns.str.contains('Unnamed')])
+
     return df
