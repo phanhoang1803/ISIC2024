@@ -87,7 +87,9 @@ class TBP_Dataset(Dataset):
             image = self.transform(image=image)["image"]
             
         if self.meta_feature_columns is not None:
+            # Load meta data and fill missing values
             meta = row[self.meta_feature_columns].values.astype(np.float32)
+            meta = np.nan_to_num(meta)
             meta = torch.tensor(meta, dtype=torch.float)
             print("[INFO] meta in TBP_Dataset:", meta)
             
