@@ -24,7 +24,7 @@ from models.criterion import valid_score, criterion
 from utils.utils import parse_arguments
 from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold
 
-def train_one_epoch(model, optimizer, scheduler, dataloader, meta_feature_columns, device, epoch, CONFIG):
+def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, CONFIG):
     """
     Trains the model for one epoch.
 
