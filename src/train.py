@@ -55,7 +55,7 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, meta_feature_column
         # Move data to device
         images = data['image'].to(device, dtype=torch.float)
         targets = data['target'].to(device, dtype=torch.float)
-        meta_feature_columns = data['meta_feature'].to(device, dtype=torch.float)
+        meta_feature_columns = data['meta'].to(device, dtype=torch.float)
         
         batch_size = images.size(0)
         
@@ -124,7 +124,7 @@ def valid_one_epoch(model, dataloader, meta_feature_columns, device, epoch):
     for step, data in bar:        
         images = data['image'].to(device, dtype=torch.float)
         targets = data['target'].to(device, dtype=torch.float)
-        meta_feature_columns = data['meta_feature'].to(device, dtype=torch.float)
+        meta_feature_columns = data['meta'].to(device, dtype=torch.float)
         
         batch_size = images.size(0)
 
