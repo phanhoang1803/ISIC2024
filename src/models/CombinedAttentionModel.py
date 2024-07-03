@@ -39,7 +39,7 @@ class ImageBranch(nn.Module):
             model = models.efficientnet_b0(pretrained=self.pretrained)
             model.classifier = nn.Identity() 
         else:
-            raise ValueError(f"Unsupported model: {self.model_name}")
+            raise ValueError(f"Unsupported model: {self.model_name}\n Supported models: resnet18, vgg16, efficientnet_b0")
         
         return model
 
@@ -51,7 +51,7 @@ class ImageBranch(nn.Module):
         elif self.model_name == 'efficientnet_b0':
             return 1280
         else:
-            raise ValueError(f"Unsupported model: {self.model_name}")
+            raise ValueError(f"Unsupported model: {self.model_name} \n Supported models: resnet18, vgg16, efficientnet_b0")
 
     def forward(self, x):
         x = self.cnn(x)

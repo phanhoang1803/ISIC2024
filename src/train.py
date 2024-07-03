@@ -233,8 +233,8 @@ def prepare_loaders(df, fold, meta_feature_columns, data_transforms, CONFIG):
     df_train = df[df.kfold != fold].reset_index(drop=True)
     df_valid = df[df.kfold == fold].reset_index(drop=True)
     
-    train_dataset = TBP_Dataset(df_train, meta_feature_columns=meta_feature_columns, transforms=data_transforms["train"])
-    valid_dataset = TBP_Dataset(df_valid, meta_feature_columns=meta_feature_columns, transforms=data_transforms["valid"])
+    train_dataset = TBP_Dataset(df_train, meta_feature_columns=meta_feature_columns, transform=data_transforms["train"])
+    valid_dataset = TBP_Dataset(df_valid, meta_feature_columns=meta_feature_columns, transform=data_transforms["valid"])
 
     train_loader = DataLoader(train_dataset, batch_size=CONFIG['train_batch_size'], 
                               num_workers=2, shuffle=True, pin_memory=True, drop_last=True)
