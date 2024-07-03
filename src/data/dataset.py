@@ -2,6 +2,8 @@ import cv2
 import random
 import torch
 from torch.utils.data import Dataset
+import numpy as np
+
 
 class ISICDataset_for_Train(Dataset):
     def __init__(self, df, transforms=None):
@@ -63,3 +65,38 @@ class ISICDataset(Dataset):
             'image': img,
             'target': target
         }
+
+
+class TBP_Dataset(Dataset):
+    def __init__(self, df, meta_feature_columns, transform=None):
+        self.df = df.reset_index(drop=True)
+        self.meta_features = meta_feature_columns
+        self.transform = transform
+    
+    def __len__(self):
+        return self.df.shape[0]
+    
+    def __getitem__(self, index):
+        row = self.df.iloc[index]
+        
+        image = cv2.imread(row['file_path'])
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        target = row['target']
+        
+        if self.transform:
+            image = self.transform(image)
+            
+        if self.meta_feature_columns is not None:
+            meta = row[self.meta_feature_columns].values
+            meta = torch.tensor(meta, dtype=torch.float)
+            
+            return {
+                'image': image,
+                'target': target,
+                'meta': meta
+            }
+        else:
+            return {
+                'image': image,
+                'target': target
+            }
