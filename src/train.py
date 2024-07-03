@@ -183,6 +183,10 @@ def run_training(model, train_loader, valid_loader, use_meta, optimizer, schedul
     best_epoch_pauc = -np.inf
     history = defaultdict(list)
 
+    print('[INFO] Start training...')
+    print('[INFO] Architecture: {}'.format(model))
+    print('[INFO] Use metadata: {}'.format(use_meta))
+    
     for epoch in range(1, num_epochs + 1):
         gc.collect()
         train_epoch_loss, train_epoch_pauc, train_epoch_acc = train_one_epoch(model, 
