@@ -174,7 +174,7 @@ def run_training(model, train_loader, valid_loader, use_meta, optimizer, schedul
     best_epoch_pauc = -np.inf
     history = defaultdict(list)
     patience = CONFIG['patience']
-    
+    current_patience = 0
     print('[INFO] Start training...')
     print('[INFO] Architecture: {}'.format(model))
     print('[INFO] Use metadata: {}'.format(use_meta))
@@ -205,6 +205,7 @@ def run_training(model, train_loader, valid_loader, use_meta, optimizer, schedul
         if best_epoch_pauc <= val_epoch_pauc:
             print(f"Validation pAUC Improved ({best_epoch_pauc} ---> {val_epoch_pauc})")
             best_epoch_pauc = val_epoch_pauc
+            current_patience = 0
             best_model_wts = copy.deepcopy(model.state_dict())
             PATH = "pAUC{:.4f}_Loss{:.4f}_epoch{:.0f}.bin".format(val_epoch_pauc, val_epoch_loss, epoch)
             torch.save(model.state_dict(), PATH)
