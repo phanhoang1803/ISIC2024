@@ -89,6 +89,7 @@ class TBP_Dataset(Dataset):
         if self.meta_feature_columns is not None:
             meta = row[self.meta_feature_columns].values.astype(np.float32)
             meta = torch.tensor(meta, dtype=torch.float)
+            print("[INFO] meta in TBP_Dataset:", meta)
             
             return {
                 'image': image,
