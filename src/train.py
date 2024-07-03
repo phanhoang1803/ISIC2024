@@ -290,7 +290,7 @@ def main():
     elif CONFIG['architecture'] == 'EnsembleModel':
         model = EnsembleModel()
     elif CONFIG['architecture'] == 'CombinedAttentionModel':
-        model = CombinedAttentionModel()
+        model = CombinedAttentionModel(image_model_name=args.model_name, metadata_dim=len(meta_feature_columns), hidden_dims=[512, 128], metadata_output_dim=128)
     
     model.to(CONFIG['device'])
 
