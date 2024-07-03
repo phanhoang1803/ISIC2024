@@ -70,7 +70,7 @@ class ISICDataset(Dataset):
 class TBP_Dataset(Dataset):
     def __init__(self, df, meta_feature_columns, transform=None):
         self.df = df.reset_index(drop=True)
-        self.meta_features = meta_feature_columns
+        self.meta_feature_columns = meta_feature_columns
         self.transform = transform
     
     def __len__(self):
