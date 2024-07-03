@@ -98,7 +98,7 @@ class Attention(nn.Module):
         return attn_applied, attn_weights
 
 
-class CombinedAttentionModel(nn.Module):
+class CombinedModel(nn.Module):
     def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[512, 128], metadata_output_dim=128):
         """
         Initializes the CombinedAttentionModel with the given hyperparameters.
@@ -109,7 +109,7 @@ class CombinedAttentionModel(nn.Module):
             hidden_dims (list, optional): The hidden dimensions for the metadata branch. Defaults to [512, 128].
             metadata_output_dim (int, optional): The output dimension for the metadata branch. Defaults to 128.
         """
-        super(CombinedAttentionModel, self).__init__()
+        super(CombinedModel, self).__init__()
         
         # Initialize hyperparameters
         self.metadata_dim = metadata_dim
