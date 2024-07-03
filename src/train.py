@@ -274,10 +274,11 @@ def main():
     seed_torch(args.seed)
 
     # Load main data (ISIC 2024)
+    print("Loading data...")
     df = load_data(args.root_dir)
     meta_feature_columns = None
     
-    if args.feature_engineering:
+    if CONFIG['feature_engineering'] == True:
         print("Feature Engineering...")
         # Perform feature engineering
         df, meta_feature_columns = feature_engineering(df)
