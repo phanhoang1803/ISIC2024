@@ -147,16 +147,20 @@ class CombinedAttentionModel(nn.Module):
         # Pass image through image branch and attention
         print("[INFO] Pass image through image branch and attention")
         x = self.image_branch(image)
-        print("x:", x)
+        print("Image feature map:", x)
         x, image_attn_weights = self.image_attention(x)
+        print("Attention result:", x)
         
         # If metadata dimension is greater than zero, pass metadata through metadata branch and attention
         if self.metadata_dim > 0:
             print("[INFO] Metadata dimension is greater than zero, pass metadata through metadata branch and attention")
             x_meta = self.metadata_branch(metadata)
+            print("Metadata feature map:", x_meta)
             x_meta, metadata_attn_weights = self.metadata_attention(x_meta)
+            print("Attention result:", x_meta)
             # Concatenate image and metadata feature maps
             x = torch.cat([x, x_meta], dim=1)
+            print("Combined feature map:", x)
         
         # Pass feature maps through final layer
         print("[INFO] Pass feature maps through final layer")
