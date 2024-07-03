@@ -55,13 +55,12 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, meta_feature_column
         # Move data to device
         images = data['image'].to(device, dtype=torch.float)
         targets = data['target'].to(device, dtype=torch.float)
-        
-        meta_feature_columns = data['meta'].to(device, dtype=torch.float)
+        meta = data['meta'].to(device, dtype=torch.float) if data['meta'] is not None else None
         
         batch_size = images.size(0)
         
         # Forward pass
-        outputs = model(images, meta_feature_columns).squeeze()
+        outputs = model(images, meta).squeeze()
         
         print("targets", targets)
         print("outputs", outputs)
@@ -116,7 +115,7 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, meta_feature_column
     return epoch_loss, epoch_auroc, epoch_acc.item()
 
 @torch.inference_mode()
-def valid_one_epoch(model, dataloader, meta_feature_columns, device, epoch):
+def valid_one_epoch(model, dataloader,device, epoch):
     model.eval()
     
     dataset_size = 0
@@ -127,12 +126,12 @@ def valid_one_epoch(model, dataloader, meta_feature_columns, device, epoch):
     bar = tqdm(enumerate(dataloader), total=len(dataloader))
     for step, data in bar:        
         images = data['image'].to(device, dtype=torch.float)
-        targets = data['target'].to(device, dtype=torch.float)        
-        meta_feature_columns = data['meta'].to(device, dtype=torch.float)
+        targets = data['target'].to(device, dtype=torch.float)      
+        meta = data['meta'].to(device, dtype=torch.float) if data['meta'] is not None else None
         
         batch_size = images.size(0)
 
-        outputs = model(images, meta_feature_columns).squeeze()
+        outputs = model(images, meta).squeeze()
         loss = criterion(outputs, targets)
         
         all_targets.append(targets.detach().cpu().numpy())
@@ -165,7 +164,7 @@ def valid_one_epoch(model, dataloader, meta_feature_columns, device, epoch):
     
     return epoch_loss, epoch_auroc, epoch_acc.item()
 
-def run_training(model, train_loader, valid_loader, meta_feature_columns, optimizer, scheduler, device, num_epochs, CONFIG):
+def run_training(model, train_loader, valid_loader, optimizer, scheduler, device, num_epochs, CONFIG):
     if torch.cuda.is_available():
         print("[INFO] Using GPU: {}\n".format(torch.cuda.get_device_name()))
 
@@ -180,14 +179,12 @@ def run_training(model, train_loader, valid_loader, meta_feature_columns, optimi
                                                                               optimizer=optimizer, 
                                                                               scheduler=scheduler,
                                                                               dataloader=train_loader,
-                                                                              meta_feature_columns=meta_feature_columns,
                                                                               device=device, 
                                                                               epoch=epoch, 
                                                                               CONFIG=CONFIG)
 
         val_epoch_loss, val_epoch_pauc, val_epoch_acc = valid_one_epoch(model, 
                                                                         dataloader=valid_loader, 
-                                                                        meta_feature_columns=meta_feature_columns,
                                                                         device=device,
                                                                         epoch=epoch)
 
@@ -312,7 +309,6 @@ def main():
     model, history = run_training(model, 
                                   train_loader=train_loader, 
                                   valid_loader=valid_loader, 
-                                  meta_feature_columns=meta_feature_columns,
                                   optimizer=optimizer, 
                                   scheduler=scheduler, 
                                   device=CONFIG['device'], 
