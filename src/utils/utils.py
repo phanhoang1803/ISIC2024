@@ -20,6 +20,7 @@ def parse_arguments():
     parser.add_argument('--architecture', type=str, default="EfficientNet", help='Architecture')
     parser.add_argument('--root_dir', type=str, required=True,help='Root directory of data') # Required
     parser.add_argument('--checkpoint_path', type=str, help='Checkpoint path') 
+    parser.add_argument('--feature_engineering', type=bool, default=False, help='Feature engineering')
 
     ### Additional data
     parser.add_argument('--extra_data_dirs', type=str, nargs='*', help='List of additional directories containing training data')  

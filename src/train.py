@@ -261,9 +261,11 @@ def main():
 
     # Load main data (ISIC 2024)
     df = load_data(args.root_dir)
+    meta_feature_columns = None
     
-    # Perform feature engineering
-    df, meta_feature_columns = feature_engineering(df)
+    if args.feature_engineering:
+        # Perform feature engineering
+        df, meta_feature_columns = feature_engineering(df)
     
     # Load additional data if provided
     if args.extra_data_dirs:
