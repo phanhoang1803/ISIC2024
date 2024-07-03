@@ -24,7 +24,7 @@ from models.criterion import valid_score, criterion
 from utils.utils import parse_arguments
 from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold
 
-def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, CONFIG):
+def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, epoch, CONFIG):
     """
     Trains the model for one epoch.
 
@@ -56,7 +56,11 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, CONF
         # Move data to device
         images = data['image'].to(device, dtype=torch.float)
         targets = data['target'].to(device, dtype=torch.float)
-        meta = data['meta'].to(device, dtype=torch.float) if data['meta'] is not None else None
+        
+        if use_meta:
+            meta = data['meta'].to(device, dtype=torch.float)
+        else:
+            meta = None
         
         batch_size = images.size(0)
         
@@ -116,7 +120,7 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, CONF
     return epoch_loss, epoch_auroc, epoch_acc.item()
 
 @torch.inference_mode()
-def valid_one_epoch(model, dataloader,device, epoch):
+def valid_one_epoch(model, dataloader, use_meta, device, epoch):
     model.eval()
     
     dataset_size = 0
@@ -129,7 +133,11 @@ def valid_one_epoch(model, dataloader,device, epoch):
     for step, data in bar:        
         images = data['image'].to(device, dtype=torch.float)
         targets = data['target'].to(device, dtype=torch.float)      
-        meta = data['meta'].to(device, dtype=torch.float) if data['meta'] is not None else None
+        
+        if use_meta:
+            meta = data['meta'].to(device, dtype=torch.float) 
+        else:
+            meta = None
         
         batch_size = images.size(0)
 
@@ -166,7 +174,7 @@ def valid_one_epoch(model, dataloader,device, epoch):
     
     return epoch_loss, epoch_auroc, epoch_acc.item()
 
-def run_training(model, train_loader, valid_loader, optimizer, scheduler, device, num_epochs, CONFIG):
+def run_training(model, train_loader, valid_loader, use_meta, optimizer, scheduler, device, num_epochs, CONFIG):
     if torch.cuda.is_available():
         print("[INFO] Using GPU: {}\n".format(torch.cuda.get_device_name()))
 
@@ -181,12 +189,14 @@ def run_training(model, train_loader, valid_loader, optimizer, scheduler, device
                                                                               optimizer=optimizer, 
                                                                               scheduler=scheduler,
                                                                               dataloader=train_loader,
+                                                                              use_meta=use_meta,
                                                                               device=device, 
                                                                               epoch=epoch, 
                                                                               CONFIG=CONFIG)
 
         val_epoch_loss, val_epoch_pauc, val_epoch_acc = valid_one_epoch(model, 
                                                                         dataloader=valid_loader, 
+                                                                        use_meta=use_meta,
                                                                         device=device,
                                                                         epoch=epoch)
 
@@ -316,6 +326,7 @@ def main():
     model, history = run_training(model, 
                                   train_loader=train_loader, 
                                   valid_loader=valid_loader, 
+                                  use_meta=meta_feature_columns is not None,
                                   optimizer=optimizer, 
                                   scheduler=scheduler, 
                                   device=CONFIG['device'], 
