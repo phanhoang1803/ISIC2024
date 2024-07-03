@@ -63,8 +63,8 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, CONF
         # Forward pass
         outputs = model(images, meta).squeeze()
         
-        print("targets", targets)
-        print("outputs", outputs)
+        # print("targets", targets)
+        # print("outputs", outputs)
         
         loss = criterion(outputs, targets)
         loss = loss / CONFIG['n_accumulate']

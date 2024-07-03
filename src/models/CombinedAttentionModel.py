@@ -63,20 +63,20 @@ class MetadataBranch(nn.Module):
         self.meta = nn.Sequential(
             nn.Linear(metadata_dim, hidden_dims[0]),
             nn.BatchNorm1d(hidden_dims[0]),
-            # Swish_Module(),
-            nn.ReLU(),
+            Swish_Module(),
+            # nn.ReLU(),
             nn.Dropout(p=0.3),
             
             nn.Linear(hidden_dims[0], hidden_dims[1]),
             nn.BatchNorm1d(hidden_dims[1]),
-            # Swish_Module(),
-            nn.ReLU(),
+            Swish_Module(),
+            # nn.ReLU(),
             nn.Dropout(p=0.3),
             
             nn.Linear(hidden_dims[1], output_dim),
             nn.BatchNorm1d(output_dim),
-            # Swish_Module(),
-            nn.ReLU()
+            Swish_Module(),
+            # nn.ReLU()
         )
     
     def forward(self, x):
