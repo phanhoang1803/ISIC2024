@@ -154,6 +154,7 @@ class CombinedAttentionModel(nn.Module):
         # If metadata dimension is greater than zero, pass metadata through metadata branch and attention
         if self.metadata_dim > 0:
             print("[INFO] Metadata dimension is greater than zero, pass metadata through metadata branch and attention")
+            print("Metadata:", metadata)
             x_meta = self.metadata_branch(metadata)
             print("Metadata feature map:", x_meta)
             x_meta, metadata_attn_weights = self.metadata_attention(x_meta)
