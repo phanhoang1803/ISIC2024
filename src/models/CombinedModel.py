@@ -32,12 +32,15 @@ class ImageBranch(nn.Module):
         if self.model_name == 'resnet18':
             model = models.resnet18(pretrained=self.pretrained)
             model.fc = nn.Identity()  # Remove the final classification layer
+            model.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         elif self.model_name == 'vgg16':
             model = models.vgg16(pretrained=self.pretrained)
             model.classifier[-1] = nn.Identity() 
+            model.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         elif self.model_name == 'efficientnet_b0':
             model = models.efficientnet_b0(pretrained=self.pretrained)
             model.classifier = nn.Identity() 
+            model.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         else:
             raise ValueError(f"Unsupported model: {self.model_name}\n Supported models: resnet18, vgg16, efficientnet_b0")
         
@@ -64,40 +67,17 @@ class MetadataBranch(nn.Module):
             nn.Linear(metadata_dim, hidden_dims[0]),
             nn.BatchNorm1d(hidden_dims[0]),
             Swish_Module(),
-            # nn.ReLU(),
-            nn.Dropout(p=0.3),
-            
-            # nn.Linear(hidden_dims[0], hidden_dims[1]),
-            # nn.BatchNorm1d(hidden_dims[1]),
-            # Swish_Module(),
-            # # nn.ReLU(),
-            # nn.Dropout(p=0.3),
+            nn.Dropout(p=0.5),
             
             nn.Linear(hidden_dims[0], output_dim),
             nn.BatchNorm1d(output_dim),
             Swish_Module(),
-            # nn.ReLU()
         )
     
     def forward(self, x):
         x = self.meta(x)
         return x
     
-class Attention(nn.Module):
-    def __init__(self, input_dim):
-        super(Attention, self).__init__()
-        self.attention = nn.Sequential(
-            nn.Linear(input_dim, 128),
-            Swish_Module(),
-            nn.Linear(128, 1),
-        )
-    
-    def forward(self, x):
-        attn_weights = torch.softmax(self.attention(x), dim=1)
-        attn_applied = torch.mul(x, attn_weights)
-        return attn_applied, attn_weights
-
-
 class CombinedModel(nn.Module):
     def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[512, 128], metadata_output_dim=128):
         """
@@ -127,10 +107,7 @@ class CombinedModel(nn.Module):
         # Initialize final layer
         self.fc = nn.Sequential(
             nn.Dropout(p=0.5),  # Dropout layer
-            nn.Linear(combined_dim, 256),  # Hidden layer
-            nn.ReLU(),
-            nn.Dropout(p=0.5),  # Dropout layer
-            nn.Linear(256, 1)  # Output layer
+            nn.Linear(combined_dim, 1),  # Hidden layer
         )
         
         self.sigmoid = nn.Sigmoid()

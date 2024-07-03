@@ -45,10 +45,8 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
     
     dataset_size = 0
     running_loss = 0.0
-    running_auroc  = 0.0
     all_targets = []
     all_outputs = []
-    running_corrects = 0
     
     # Progress bar for tracking training progress
     bar = tqdm(enumerate(dataloader), total=len(dataloader))
@@ -93,13 +91,11 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
         
         # Calculate accuracy
         preds = torch.round(torch.sigmoid(outputs))
-        running_corrects += torch.sum(preds == targets.data)
         
         epoch_loss = running_loss / dataset_size
-        epoch_acc = running_corrects.double() / dataset_size
         
         # Update progress bar
-        bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, Train_Acc=epoch_acc.item(), LR=optimizer.param_groups[0]['lr'])
+        bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, LR=optimizer.param_groups[0]['lr'])
    
     # Convert targets and outputs to numpy arrays
     all_targets = np.concatenate(all_targets)
@@ -113,12 +109,12 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
     epoch_auroc = valid_score(solution, submission, row_id_column_name='target')
     
     # Update progress bar
-    bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, Train_Acc=epoch_acc.item(), Train_Auroc=epoch_auroc, LR=optimizer.param_groups[0]['lr'])
+    bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, Train_Auroc=epoch_auroc, LR=optimizer.param_groups[0]['lr'])
     
     # Collect garbage
     gc.collect()
     
-    return epoch_loss, epoch_auroc, epoch_acc.item()
+    return epoch_loss, epoch_auroc
 
 @torch.inference_mode()
 def valid_one_epoch(model, dataloader, use_meta, device, epoch):
@@ -128,7 +124,6 @@ def valid_one_epoch(model, dataloader, use_meta, device, epoch):
     running_loss = 0.0
     all_targets = []
     all_outputs = []
-    running_corrects = 0
     
     bar = tqdm(enumerate(dataloader), total=len(dataloader))
     for step, data in bar:        
@@ -151,14 +146,9 @@ def valid_one_epoch(model, dataloader, use_meta, device, epoch):
         running_loss += (loss.item() * batch_size)
         dataset_size += batch_size
         
-        # Calculate accuracy
-        preds = torch.round(torch.sigmoid(outputs))
-        running_corrects += torch.sum(preds == targets.data)
-        
         epoch_loss = running_loss / dataset_size
-        epoch_acc = running_corrects.double() / dataset_size
         
-        bar.set_postfix(Epoch=epoch, Valid_Loss=epoch_loss, Valid_Acc=epoch_acc.item())   
+        bar.set_postfix(Epoch=epoch, Valid_Loss=epoch_loss,)   
  
     
     all_targets = np.concatenate(all_targets)
@@ -169,11 +159,11 @@ def valid_one_epoch(model, dataloader, use_meta, device, epoch):
     
     epoch_auroc = valid_score(solution, submission, row_id_column_name='target')
     
-    bar.set_postfix(Epoch=epoch, Valid_Loss=epoch_loss, Valid_Acc=epoch_acc.item(), Valid_Auroc=epoch_auroc)
+    bar.set_postfix(Epoch=epoch, Valid_Loss=epoch_loss, Valid_Auroc=epoch_auroc)
     
     gc.collect()
     
-    return epoch_loss, epoch_auroc, epoch_acc.item()
+    return epoch_loss, epoch_auroc
 
 def run_training(model, train_loader, valid_loader, use_meta, optimizer, scheduler, device, num_epochs, CONFIG):
     if torch.cuda.is_available():
@@ -183,34 +173,33 @@ def run_training(model, train_loader, valid_loader, use_meta, optimizer, schedul
     best_model_wts = copy.deepcopy(model.state_dict())
     best_epoch_pauc = -np.inf
     history = defaultdict(list)
-
+    patience = CONFIG['patience']
+    
     print('[INFO] Start training...')
     print('[INFO] Architecture: {}'.format(model))
     print('[INFO] Use metadata: {}'.format(use_meta))
     
     for epoch in range(1, num_epochs + 1):
         gc.collect()
-        train_epoch_loss, train_epoch_pauc, train_epoch_acc = train_one_epoch(model, 
-                                                                              optimizer=optimizer, 
-                                                                              scheduler=scheduler,
-                                                                              dataloader=train_loader,
-                                                                              use_meta=use_meta,
-                                                                              device=device, 
-                                                                              epoch=epoch, 
-                                                                              CONFIG=CONFIG)
+        train_epoch_loss, train_epoch_pauc = train_one_epoch(model, 
+                                                            optimizer=optimizer, 
+                                                            scheduler=scheduler,
+                                                            dataloader=train_loader,
+                                                            use_meta=use_meta,
+                                                            device=device, 
+                                                            epoch=epoch, 
+                                                            CONFIG=CONFIG)
 
-        val_epoch_loss, val_epoch_pauc, val_epoch_acc = valid_one_epoch(model, 
-                                                                        dataloader=valid_loader, 
-                                                                        use_meta=use_meta,
-                                                                        device=device,
-                                                                        epoch=epoch)
+        val_epoch_loss, val_epoch_pauc = valid_one_epoch(model, 
+                                                        dataloader=valid_loader, 
+                                                        use_meta=use_meta,
+                                                        device=device,
+                                                        epoch=epoch)
 
         history['Train Loss'].append(train_epoch_loss)
         history['Valid Loss'].append(val_epoch_loss)
         history['Train pAUC'].append(train_epoch_pauc)
         history['Valid pAUC'].append(val_epoch_pauc)
-        history['Train Acc'].append(train_epoch_acc)
-        history['Valid Acc'].append(val_epoch_acc)
         history['lr'].append(scheduler.get_lr()[0])
 
         if best_epoch_pauc <= val_epoch_pauc:
@@ -220,10 +209,15 @@ def run_training(model, train_loader, valid_loader, use_meta, optimizer, schedul
             PATH = "pAUC{:.4f}_Loss{:.4f}_epoch{:.0f}.bin".format(val_epoch_pauc, val_epoch_loss, epoch)
             torch.save(model.state_dict(), PATH)
             print("Model Saved")
-
+        else:
+            current_patience += 1
+            if current_patience >= patience:
+                print(f'Validation loss did not improve for {patience} epochs. Stopping training...')
+                break
+        
         print(f"Epoch {epoch}/{num_epochs} | "
-              f"Train Loss: {train_epoch_loss:.4f}, Train Acc: {train_epoch_acc:.4f}, Train pAUC: {train_epoch_pauc:.4f} | "
-              f"Valid Loss: {val_epoch_loss:.4f}, Valid Acc: {val_epoch_acc:.4f}, Valid pAUC: {val_epoch_pauc:.4f}")
+              f"Train Loss: {train_epoch_loss:.4f}, Train pAUC: {train_epoch_pauc:.4f} | "
+              f"Valid Loss: {val_epoch_loss:.4f}, Valid pAUC: {val_epoch_pauc:.4f}")
 
     end = time.time()
     time_elapsed = end - start

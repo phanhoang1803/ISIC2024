@@ -21,6 +21,7 @@ def parse_arguments():
     parser.add_argument('--root_dir', type=str, required=True,help='Root directory of data') # Required
     parser.add_argument('--checkpoint_path', type=str, help='Checkpoint path') 
     parser.add_argument('--feature_engineering', action='store_true', help='Feature engineering')
+    parser.add_argument('--patience', type=int, default=10, help='Patience')
 
     ### Additional data
     parser.add_argument('--extra_data_dirs', type=str, nargs='*', help='List of additional directories containing training data')  
@@ -36,7 +37,7 @@ def parse_arguments():
     parser.add_argument('--scheduler', type=str, default='CosineAnnealingLR', help='Scheduler')
     parser.add_argument('--min_lr', type=float, default=1e-6, help='Minimum learning rate')
     parser.add_argument('--T_max', type=int, default=500, help='T_max for CosineAnnealingLR')
-    parser.add_argument('--weight_decay', type=float, default=1e-6, help='Weight decay')
+    parser.add_argument('--weight_decay', type=float, default=1e-5, help='Weight decay')
     parser.add_argument('--n_accumulate', type=int, default=1, help='Number of gradient accumulation steps')
     parser.add_argument('--n_fold', type=int, default=5, help='Number of folds')
     parser.add_argument('--fold', type=int, default=0, help='Fold number')
