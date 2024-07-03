@@ -84,7 +84,7 @@ class TBP_Dataset(Dataset):
         target = row['target']
         
         if self.transform:
-            image = self.transform(image)
+            image = self.transform(image=image)["image"]
             
         if self.meta_feature_columns is not None:
             meta = row[self.meta_feature_columns].values
