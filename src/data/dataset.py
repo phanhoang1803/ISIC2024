@@ -91,7 +91,7 @@ class TBP_Dataset(Dataset):
             meta = row[self.meta_feature_columns].values.astype(np.float32)
             meta = np.nan_to_num(meta)
             meta = torch.tensor(meta, dtype=torch.float)
-            print("[INFO] meta in TBP_Dataset:", meta)
+            # print("[INFO] meta in TBP_Dataset:", meta)
             
             return {
                 'image': image,

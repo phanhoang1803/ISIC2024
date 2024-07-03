@@ -47,6 +47,7 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, CONF
     running_auroc  = 0.0
     all_targets = []
     all_outputs = []
+    running_corrects = 0
     
     # Progress bar for tracking training progress
     bar = tqdm(enumerate(dataloader), total=len(dataloader))
@@ -122,6 +123,7 @@ def valid_one_epoch(model, dataloader,device, epoch):
     running_loss = 0.0
     all_targets = []
     all_outputs = []
+    running_corrects = 0
     
     bar = tqdm(enumerate(dataloader), total=len(dataloader))
     for step, data in bar:        
