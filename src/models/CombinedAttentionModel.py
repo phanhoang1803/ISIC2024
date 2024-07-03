@@ -145,17 +145,22 @@ class CombinedAttentionModel(nn.Module):
             torch.Tensor: The output tensor after passing through the model.
         """
         # Pass image through image branch and attention
+        print("[INFO] Pass image through image branch and attention")
         x = self.image_branch(image)
+        print("x:", x)
         x, image_attn_weights = self.image_attention(x)
         
         # If metadata dimension is greater than zero, pass metadata through metadata branch and attention
         if self.metadata_dim > 0:
+            print("[INFO] Metadata dimension is greater than zero, pass metadata through metadata branch and attention")
             x_meta = self.metadata_branch(metadata)
             x_meta, metadata_attn_weights = self.metadata_attention(x_meta)
             # Concatenate image and metadata feature maps
             x = torch.cat([x, x_meta], dim=1)
         
         # Pass feature maps through final layer
+        print("[INFO] Pass feature maps through final layer")
+        print("Logits:", self.fc(x))
         output = self.sigmoid(self.fc(x))
         
         return output
