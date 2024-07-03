@@ -17,6 +17,7 @@ from models.RNN_GRU_model import ISICModel_MaskRNN_GRU
 from models.EfficientNet_FPN_SE import EfficientNet_FPN_SE
 from models.ensemble_model import EnsembleModel
 from models.CombinedAttentionModel import CombinedAttentionModel
+from models.CombinedModel import CombinedModel
 # from utils.config import CONFIG
 from utils.seed import seed_torch
 from utils.utils import make_dirs, save_model
@@ -315,6 +316,11 @@ def main():
                                        metadata_dim=len(meta_feature_columns) if meta_feature_columns else 0, 
                                        hidden_dims=[512, 128], 
                                        metadata_output_dim=128)
+    elif CONFIG['architecture'] == 'CombinedModel':
+        model = CombinedModel(image_model_name=args.model_name,
+                              metadata_dim=len(meta_feature_columns) if meta_feature_columns else 0, 
+                              hidden_dims=[512, 128], 
+                              metadata_output_dim=128)
     
     model.to(CONFIG['device'])
 
