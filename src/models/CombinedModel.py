@@ -58,7 +58,7 @@ class ImageBranch(nn.Module):
         return x
 
 class MetadataBranch(nn.Module):
-    def __init__(self, metadata_dim, hidden_dims=[512, 128], output_dim=128):
+    def __init__(self, metadata_dim, hidden_dims=[512], output_dim=128):
         super(MetadataBranch, self).__init__()
         self.meta = nn.Sequential(
             nn.Linear(metadata_dim, hidden_dims[0]),
@@ -67,13 +67,13 @@ class MetadataBranch(nn.Module):
             # nn.ReLU(),
             nn.Dropout(p=0.3),
             
-            nn.Linear(hidden_dims[0], hidden_dims[1]),
-            nn.BatchNorm1d(hidden_dims[1]),
-            Swish_Module(),
-            # nn.ReLU(),
-            nn.Dropout(p=0.3),
+            # nn.Linear(hidden_dims[0], hidden_dims[1]),
+            # nn.BatchNorm1d(hidden_dims[1]),
+            # Swish_Module(),
+            # # nn.ReLU(),
+            # nn.Dropout(p=0.3),
             
-            nn.Linear(hidden_dims[1], output_dim),
+            nn.Linear(hidden_dims[0], output_dim),
             nn.BatchNorm1d(output_dim),
             Swish_Module(),
             # nn.ReLU()
@@ -126,9 +126,10 @@ class CombinedModel(nn.Module):
         
         # Initialize final layer
         self.fc = nn.Sequential(
+            nn.Dropout(p=0.5),  # Dropout layer
             nn.Linear(combined_dim, 256),  # Hidden layer
-            Swish_Module(),  # Activation function
-            nn.Dropout(p=0.3),  # Dropout layer
+            nn.ReLU(),
+            nn.Dropout(p=0.5),  # Dropout layer
             nn.Linear(256, 1)  # Output layer
         )
         
