@@ -278,6 +278,7 @@ def main():
     meta_feature_columns = None
     
     if args.feature_engineering:
+        print("Feature Engineering...")
         # Perform feature engineering
         df, meta_feature_columns = feature_engineering(df)
     
