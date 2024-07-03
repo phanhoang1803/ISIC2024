@@ -98,7 +98,7 @@ class Attention(nn.Module):
         return attn_applied, attn_weights
 
 
-class CombinedModel(nn.Module):
+class CombinedAttentionModel(nn.Module):
     def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[512, 128], metadata_output_dim=128):
         """
         Initializes the CombinedAttentionModel with the given hyperparameters.
@@ -109,7 +109,7 @@ class CombinedModel(nn.Module):
             hidden_dims (list, optional): The hidden dimensions for the metadata branch. Defaults to [512, 128].
             metadata_output_dim (int, optional): The output dimension for the metadata branch. Defaults to 128.
         """
-        super(CombinedModel, self).__init__()
+        super(CombinedAttentionModel, self).__init__()
         
         # Initialize hyperparameters
         self.metadata_dim = metadata_dim
@@ -151,7 +151,7 @@ class CombinedModel(nn.Module):
         # print("[INFO] Pass image through image branch and attention")
         x = self.image_branch(image)
         # print("Image feature map:", x)
-        # x, image_attn_weights = self.image_attention(x)
+        x, image_attn_weights = self.image_attention(x)
         # print("Attention result:", x)
         
         # If metadata dimension is greater than zero, pass metadata through metadata branch and attention
@@ -160,7 +160,7 @@ class CombinedModel(nn.Module):
             # print("Metadata:", metadata)
             x_meta = self.metadata_branch(metadata)
             # print("Metadata feature map:", x_meta)
-            # x_meta, metadata_attn_weights = self.metadata_attention(x_meta)
+            x_meta, metadata_attn_weights = self.metadata_attention(x_meta)
             # print("Attention result:", x_meta)
             # Concatenate image and metadata feature maps
             x = torch.cat([x, x_meta], dim=1)
