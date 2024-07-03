@@ -55,7 +55,6 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, meta_feature_column
         # Move data to device
         images = data['image'].to(device, dtype=torch.float)
         targets = data['target'].to(device, dtype=torch.float)
-        print("targets", targets)
         
         meta_feature_columns = data['meta'].to(device, dtype=torch.float)
         
@@ -63,6 +62,9 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, meta_feature_column
         
         # Forward pass
         outputs = model(images, meta_feature_columns).squeeze()
+        
+        print("targets", targets)
+        print("outputs", outputs)
         
         loss = criterion(outputs, targets)
         loss = loss / CONFIG['n_accumulate']
