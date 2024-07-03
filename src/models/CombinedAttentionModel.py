@@ -130,6 +130,8 @@ class CombinedAttentionModel(nn.Module):
             nn.Dropout(p=0.3),  # Dropout layer
             nn.Linear(256, 1)  # Output layer
         )
+        
+        self.sigmoid = nn.Sigmoid()
     
     def forward(self, image, metadata):
         """
@@ -154,6 +156,6 @@ class CombinedAttentionModel(nn.Module):
             x = torch.cat([x, x_meta], dim=1)
         
         # Pass feature maps through final layer
-        output = nn.Sigmoid(self.fc(x))
+        output = self.sigmoid(self.fc(x))
         
         return output
