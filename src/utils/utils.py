@@ -22,7 +22,7 @@ def parse_arguments():
     parser.add_argument('--checkpoint_path', type=str, help='Checkpoint path') 
     parser.add_argument('--feature_engineering', action='store_true', help='Feature engineering')
     parser.add_argument('--patience', type=int, default=10, help='Patience')
-    parser.add_argument('--neg_ratio', type=int, default=1, help='The ratio of negative samples to positive samples')
+    parser.add_argument('--neg_ratio', type=int, default=20, help='The ratio of negative samples to positive samples')
 
     ### Additional data
     parser.add_argument('--extra_data_dirs', type=str, nargs='*', help='List of additional directories containing training data')  
