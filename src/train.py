@@ -270,24 +270,58 @@ def run_training(model, train_loader, valid_loader, use_meta, optimizer, schedul
     return model, history  # Return the trained model and history
 
 def fetch_scheduler(optimizer, CONFIG):
+    """
+    Fetches the scheduler based on the configuration.
+
+    Args:
+        optimizer (torch.optim.Optimizer): The optimizer used for training.
+        CONFIG (dict): The configuration dictionary.
+
+    Returns:
+        torch.optim.lr_scheduler._LRScheduler: The scheduler for learning rate adjustment.
+            Returns None if no scheduler is specified in the configuration.
+    """
+
+    # Check which scheduler is specified in the configuration
     if CONFIG['scheduler'] == 'CosineAnnealingLR':
-        scheduler = lr_scheduler.CosineAnnealingLR(optimizer,T_max=CONFIG['T_max'], 
+        # Create a CosineAnnealingLR scheduler
+        scheduler = lr_scheduler.CosineAnnealingLR(optimizer,
+                                                   T_max=CONFIG['T_max'], 
                                                    eta_min=CONFIG['min_lr'])
     elif CONFIG['scheduler'] == 'CosineAnnealingWarmRestarts':
-        scheduler = lr_scheduler.CosineAnnealingWarmRestarts(optimizer,T_0=CONFIG['T_0'], 
+        # Create a CosineAnnealingWarmRestarts scheduler
+        scheduler = lr_scheduler.CosineAnnealingWarmRestarts(optimizer,
+                                                             T_0=CONFIG['T_0'], 
                                                              eta_min=CONFIG['min_lr'])
     elif CONFIG['scheduler'] == None:
+        # Return None if no scheduler is specified
         return None
-        
+    
     return scheduler
 
-def prepare_loaders(df, fold, meta_feature_columns, data_transforms, CONFIG):
+def prepare_loaders(df: pd.DataFrame, fold: int, meta_feature_columns: list, data_transforms: dict, CONFIG: dict) -> tuple:
+    """
+    Prepare data loaders for training and validation datasets.
+
+    Args:
+        df (pd.DataFrame): The main dataframe containing the data.
+        fold (int): The fold number for validation.
+        meta_feature_columns (list): The list of meta feature columns.
+        data_transforms (dict): The dictionary containing data transforms.
+        CONFIG (dict): The dictionary containing configuration parameters.
+
+    Returns:
+        tuple: A tuple containing the data loaders for training and validation datasets.
+    """
+    # Split the dataframe into training and validation datasets based on the fold
     df_train = df[df.kfold != fold].reset_index(drop=True)
     df_valid = df[df.kfold == fold].reset_index(drop=True)
-    
+
+    # Create the datasets
     train_dataset = TBP_Dataset(df_train, meta_feature_columns=meta_feature_columns, transform=data_transforms["train"])
     valid_dataset = TBP_Dataset(df_valid, meta_feature_columns=meta_feature_columns, transform=data_transforms["valid"])
 
+    # Create the data loaders
     train_loader = DataLoader(train_dataset, batch_size=CONFIG['train_batch_size'], 
                               num_workers=2, shuffle=True, pin_memory=True, drop_last=True)
     valid_loader = DataLoader(valid_dataset, batch_size=CONFIG['valid_batch_size'], 
