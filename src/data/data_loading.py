@@ -22,8 +22,8 @@ def load_data(ROOT_DIR, neg_ratio=20):
     df = pd.read_csv(f'{ROOT_DIR}/train-metadata.csv')
 
     # Print columns and sample rows for debugging
-    print("Columns in DataFrame:", df.columns)
-    print("Sample data from DataFrame:\n", df.head())
+    print("[INFO] Columns in DataFrame:", df.columns)
+    print("[INFO] Sample data from DataFrame:\n", df.head())
 
     # Ensure 'isic_id' column is present
     if 'isic_id' not in df.columns:
@@ -34,7 +34,7 @@ def load_data(ROOT_DIR, neg_ratio=20):
     df_negative = df[df['target'] == 0].reset_index(drop=True)
 
     # Upsample the negative samples
-    df = pd.concat([df_positive, df_negative.iloc[:df_positive.shape[0] * neg_ratio, :]])
+    df = pd.concat([df_positive, df_negative.iloc[:df_positive.shape[0] * neg_ratio, :]]).reset_index(drop=True)
 
     # Add file path column
     df['file_path'] = df['isic_id'].apply(lambda x: f'{TRAIN_DIR}/{x}.jpg')

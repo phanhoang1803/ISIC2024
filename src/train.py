@@ -286,8 +286,10 @@ def main():
         # Perform feature engineering
         df, meta_feature_columns = feature_engineering(df)
     
-    print("Columns in Final DataFrame:", df.columns)
-    print("Sample data from Final DataFrame:\n", df.head())
+    print("[INFO] Columns in Final DataFrame:", df.columns)
+    print("[INFO] Sample data from Final DataFrame:\n", df.head())
+    print("[INFO] Number of positive samples:", df[df['target'] == 1].shape[0])
+    print("[INFO] Number of negative samples:", df[df['target'] == 0].shape[0])
     
     # Calculate T_max
     CONFIG['T_max'] = df.shape[0] * (CONFIG["n_fold"]-1) * CONFIG['epochs'] // CONFIG['train_batch_size'] // CONFIG["n_fold"]
