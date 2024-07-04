@@ -42,8 +42,12 @@ class ImageBranch(nn.Module):
             model = models.efficientnet_b0(pretrained=self.pretrained)
             model.classifier = nn.Identity() 
             model.avgpool = GeM()
+        elif self.model_name == 'efficientnet_b7':
+            model = models.efficientnet_b7(pretrained=self.pretrained)
+            model.classifier = nn.Identity() 
+            model.avgpool = GeM()
         else:
-            raise ValueError(f"Unsupported model: {self.model_name}\n Supported models: resnet18, vgg16, efficientnet_b0")
+            raise ValueError(f"Unsupported model: {self.model_name}\n Supported models: resnet18, vgg16, efficientnet_b0, efficientnet_b7")
         
         return model
 
@@ -54,8 +58,10 @@ class ImageBranch(nn.Module):
             return 4096
         elif self.model_name == 'efficientnet_b0':
             return 1280
+        elif self.model_name == 'efficientnet_b7':
+            return 2560
         else:
-            raise ValueError(f"Unsupported model: {self.model_name} \n Supported models: resnet18, vgg16, efficientnet_b0")
+            raise ValueError(f"Unsupported model: {self.model_name} \n Supported models: resnet18, vgg16, efficientnet_b0, efficientnet_b7")
 
     def forward(self, x):
         x = self.cnn(x)
