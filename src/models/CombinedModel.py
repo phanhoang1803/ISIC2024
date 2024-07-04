@@ -30,38 +30,50 @@ class ImageBranch(nn.Module):
         self.output_dim = self._get_output_dim()
         
     def _create_cnn_model(self):
-        if self.model_name == 'resnet18':
-            model = models.resnet18(pretrained=self.pretrained)
-            model.fc = nn.Identity()  # Remove the final classification layer
+        model_architectures = {
+            'resnet18': models.resnet18,
+            'vgg16': models.vgg16,
+            'efficientnet_b0': models.efficientnet_b0,
+            'efficientnet_b1': models.efficientnet_b1,
+            'efficientnet_b2': models.efficientnet_b2,
+            'efficientnet_b3': models.efficientnet_b3,
+            'efficientnet_b4': models.efficientnet_b4,
+            'efficientnet_b5': models.efficientnet_b5,
+            'efficientnet_b6': models.efficientnet_b6,
+            'efficientnet_b7': models.efficientnet_b7
+        }
+        
+        model = model_architectures[self.model_name](pretrained=self.pretrained)
+        
+        if self.model_name in ['resnet18', 'vgg16']:
+            model.fc = nn.Identity()
             model.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        elif self.model_name == 'vgg16':
-            model = models.vgg16(pretrained=self.pretrained)
-            model.classifier[-1] = nn.Identity() 
-            model.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        elif self.model_name == 'efficientnet_b0':
-            model = models.efficientnet_b0(pretrained=self.pretrained)
-            model.classifier = nn.Identity() 
-            model.avgpool = GeM()
-        elif self.model_name == 'efficientnet_b7':
-            model = models.efficientnet_b7(pretrained=self.pretrained)
-            model.classifier = nn.Identity() 
+        elif self.model_name.startswith('efficientnet_b'):
+            model.classifier = nn.Identity()
             model.avgpool = GeM()
         else:
-            raise ValueError(f"Unsupported model: {self.model_name}\n Supported models: resnet18, vgg16, efficientnet_b0, efficientnet_b7")
+            raise ValueError(f"Unsupported model: {self.model_name}\n Supported models: resnet18, vgg16, efficientnet_b 0 to 7")
         
         return model
 
     def _get_output_dim(self):
-        if self.model_name == 'resnet18':
-            return 512
-        elif self.model_name == 'vgg16':
-            return 4096
-        elif self.model_name == 'efficientnet_b0':
-            return 1280
-        elif self.model_name == 'efficientnet_b7':
-            return 2560
-        else:
-            raise ValueError(f"Unsupported model: {self.model_name} \n Supported models: resnet18, vgg16, efficientnet_b0, efficientnet_b7")
+        lookup = {
+            'resnet18': 512,
+            'vgg16': 4096,
+            'efficientnet_b0': 1280,
+            'efficientnet_b1': 1280,
+            'efficientnet_b2': 1408,
+            'efficientnet_b3': 1536,
+            'efficientnet_b4': 1792,
+            'efficientnet_b5': 2048,
+            'efficientnet_b6': 2304,
+            'efficientnet_b7': 2560
+        }
+        dim = lookup.get(self.model_name, None) 
+        if dim is None:
+            raise ValueError(f"Unsupported model: {self.model_name} \n Supported models: resnet18, vgg16, efficientnet_b 0 to 7")
+        
+        return dim
 
     def forward(self, x):
         x = self.cnn(x)

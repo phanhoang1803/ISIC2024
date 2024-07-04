@@ -1,7 +1,7 @@
 import pandas as pd
 import glob
 
-def load_data(ROOT_DIR, neg_ratio=20):
+def load_data(ROOT_DIR, neg_ratio: int=20):
     """
     Load data from the specified ROOT_DIR.
 
@@ -34,7 +34,8 @@ def load_data(ROOT_DIR, neg_ratio=20):
     df_negative = df[df['target'] == 0].reset_index(drop=True)
 
     # Upsample the negative samples
-    df = pd.concat([df_positive, df_negative.iloc[:df_positive.shape[0] * neg_ratio, :]]).reset_index(drop=True)
+    if neg_ratio >= 0:
+        df = pd.concat([df_positive, df_negative.iloc[:df_positive.shape[0] * neg_ratio, :]]).reset_index(drop=True)
 
     # Add file path column
     df['file_path'] = df['isic_id'].apply(lambda x: f'{TRAIN_DIR}/{x}.jpg')

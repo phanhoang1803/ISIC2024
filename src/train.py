@@ -21,7 +21,7 @@ from models.CombinedModel import CombinedModel
 # from utils.config import CONFIG
 from utils.seed import seed_torch
 from utils.utils import make_dirs, save_model
-from models.criterion import valid_score, criterion
+from models.criterion import valid_score, criterion, pAUC_score
 from utils.utils import parse_arguments
 from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold
 
@@ -66,15 +66,14 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
         # Forward pass
         outputs = model(images, meta).squeeze()
         
-        # print("targets", targets)
-        # print("outputs", outputs)
-        
+        # Calculate loss
         loss = criterion(outputs, targets)
         loss = loss / CONFIG['n_accumulate']
            
         # Backward pass and optimization
         loss.backward()
    
+        # Step the optimizer and scheduler
         if (step + 1) % CONFIG['n_accumulate'] == 0:
             optimizer.step()
             optimizer.zero_grad()
@@ -88,9 +87,6 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
         
         running_loss += (loss.item() * batch_size)
         dataset_size += batch_size
-        
-        # Calculate accuracy
-        preds = torch.round(torch.sigmoid(outputs))
         
         epoch_loss = running_loss / dataset_size
         
@@ -106,15 +102,16 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
     submission = pd.DataFrame(all_outputs, columns=['target'])
     
     # Calculate AUROC score
-    epoch_auroc = valid_score(solution, submission, row_id_column_name='target')
+    # epoch_auroc = valid_score(solution, submission, row_id_column_name='target')
+    epoch_pauc = pAUC_score(all_outputs, all_targets)
     
     # Update progress bar
-    bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, Train_Auroc=epoch_auroc, LR=optimizer.param_groups[0]['lr'])
+    bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, Train_Auroc=epoch_pauc, LR=optimizer.param_groups[0]['lr'])
     
     # Collect garbage
     gc.collect()
     
-    return epoch_loss, epoch_auroc
+    return epoch_loss, epoch_pauc
 
 @torch.inference_mode()
 def valid_one_epoch(model, dataloader, use_meta, device, epoch):
