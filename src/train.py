@@ -176,7 +176,7 @@ def run_training(model, train_loader, valid_loader, use_meta, optimizer, schedul
     patience = CONFIG['patience']
     current_patience = 0
     print('[INFO] Start training...')
-    print('[INFO] Architecture: {}'.format(model))
+    # print('[INFO] Architecture: {}'.format(model))
     print('[INFO] Use metadata: {}'.format(use_meta))
     
     for epoch in range(1, num_epochs + 1):
