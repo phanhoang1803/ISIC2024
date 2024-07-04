@@ -270,20 +270,21 @@ def main():
     seed_torch(args.seed)
 
     # Load main data (ISIC 2024)
-    print("Loading data...")
+    print("[INFO] Loading data...")
     df = load_data(args.root_dir, neg_ratio=args.neg_ratio)
     meta_feature_columns = None
     
-    if CONFIG['feature_engineering'] == True:
-        print("Feature Engineering...")
-        # Perform feature engineering
-        df, meta_feature_columns = feature_engineering(df)
-    
     # Load additional data if provided
     if args.extra_data_dirs:
+        print("[INFO] Loading additional data...")
         for extra_dir in args.extra_data_dirs:
-            extra_df = load_data(extra_dir)
+            extra_df = load_data(extra_dir, neg_ratio=args.neg_ratio)
             df = pd.concat([df, extra_df], ignore_index=True)
+    
+    if CONFIG['feature_engineering'] == True:
+        print("[INFO] Feature Engineering...")
+        # Perform feature engineering
+        df, meta_feature_columns = feature_engineering(df)
     
     print("Columns in Final DataFrame:", df.columns)
     print("Sample data from Final DataFrame:\n", df.head())
