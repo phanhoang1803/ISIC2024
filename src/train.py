@@ -279,7 +279,7 @@ def main():
         print("[INFO] Loading additional data...")
         for extra_dir in args.extra_data_dirs:
             extra_df = load_data(extra_dir, neg_ratio=args.neg_ratio)
-            df = pd.concat([df, extra_df], ignore_index=True)
+            df = pd.concat([df, extra_df], ignore_index=True).reset_index(drop=True)
     
     if CONFIG['feature_engineering'] == True:
         print("[INFO] Feature Engineering...")
