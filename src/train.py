@@ -97,16 +97,12 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
     all_targets = np.concatenate(all_targets)
     all_outputs = np.concatenate(all_outputs)
     
-    # Create dataframes for targets and outputs
-    solution = pd.DataFrame(all_targets, columns=['target'])
-    submission = pd.DataFrame(all_outputs, columns=['target'])
     
-    # Calculate AUROC score
-    # epoch_auroc = valid_score(solution, submission, row_id_column_name='target')
+    # Calculate pAUC score
     epoch_pauc = pAUC_score(all_outputs, all_targets)
     
     # Update progress bar
-    bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, Train_Auroc=epoch_pauc, LR=optimizer.param_groups[0]['lr'])
+    bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, Train_pAUC=epoch_pauc, LR=optimizer.param_groups[0]['lr'])
     
     # Collect garbage
     gc.collect()
@@ -115,6 +111,20 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
 
 @torch.inference_mode()
 def valid_one_epoch(model, dataloader, use_meta, device, epoch):
+    """
+    Validates the model for one epoch.
+
+    Args:
+        model (torch.nn.Module): The model to be validated.
+        dataloader (torch.utils.data.DataLoader): The data loader for the validation data.
+        use_meta (bool): Whether to use meta data for validation.
+        device (torch.device): The device where the model and data will be loaded.
+        epoch (int): The current epoch number.
+
+    Returns:
+        tuple: A tuple containing the average loss and pAUC score for the epoch.
+    """
+    # Set model to evaluation mode
     model.eval()
     
     dataset_size = 0
@@ -122,11 +132,14 @@ def valid_one_epoch(model, dataloader, use_meta, device, epoch):
     all_targets = []
     all_outputs = []
     
+    # Progress bar for tracking validation progress
     bar = tqdm(enumerate(dataloader), total=len(dataloader))
     for step, data in bar:        
+        # Move data to device
         images = data['image'].to(device, dtype=torch.float)
         targets = data['target'].to(device, dtype=torch.float)      
         
+        # Move meta data to device if available
         if use_meta:
             meta = data['meta'].to(device, dtype=torch.float) 
         else:
@@ -134,9 +147,11 @@ def valid_one_epoch(model, dataloader, use_meta, device, epoch):
         
         batch_size = images.size(0)
 
+        # Perform forward pass
         outputs = model(images, meta).squeeze()
         loss = criterion(outputs, targets)
         
+        # Collect targets and outputs
         all_targets.append(targets.detach().cpu().numpy())
         all_outputs.append(outputs.detach().cpu().numpy())
         
@@ -145,60 +160,86 @@ def valid_one_epoch(model, dataloader, use_meta, device, epoch):
         
         epoch_loss = running_loss / dataset_size
         
+        # Update progress bar
         bar.set_postfix(Epoch=epoch, Valid_Loss=epoch_loss,)   
  
     
+    # Convert targets and outputs to numpy arrays
     all_targets = np.concatenate(all_targets)
     all_outputs = np.concatenate(all_outputs)
     
-    solution = pd.DataFrame(all_targets, columns=['target'])
-    submission = pd.DataFrame(all_outputs, columns=['target'])
+    # Calculate pAUC score
+    epoch_pAUC = pAUC_score(all_outputs, all_targets)
     
-    epoch_auroc = valid_score(solution, submission, row_id_column_name='target')
+    # Update progress bar
+    bar.set_postfix(Epoch=epoch, Valid_Loss=epoch_loss, Valid_pAUC=epoch_pAUC)
     
-    bar.set_postfix(Epoch=epoch, Valid_Loss=epoch_loss, Valid_Auroc=epoch_auroc)
-    
+    # Collect garbage
     gc.collect()
     
-    return epoch_loss, epoch_auroc
+    return epoch_loss, epoch_pAUC
 
 def run_training(model, train_loader, valid_loader, use_meta, optimizer, scheduler, device, num_epochs, CONFIG):
+    """
+    Trains a model for a given number of epochs using the provided data and hyperparameters.
+
+    Args:
+        model (torch.nn.Module): The model to be trained.
+        train_loader (torch.utils.data.DataLoader): The data loader for the training data.
+        valid_loader (torch.utils.data.DataLoader): The data loader for the validation data.
+        use_meta (bool): Whether to use metadata or not.
+        optimizer (torch.optim.Optimizer): The optimizer used for training.
+        scheduler (torch.optim.lr_scheduler._LRScheduler): The learning rate scheduler.
+        device (torch.device): The device where the model and data will be loaded.
+        num_epochs (int): The number of epochs to train for.
+        CONFIG (dict): The configuration dictionary.
+
+    Returns:
+        tuple: A tuple containing the trained model and the history of training and validation metrics.
+    """
+    # Check if GPU is available and print GPU information
     if torch.cuda.is_available():
         print("[INFO] Using GPU: {}\n".format(torch.cuda.get_device_name()))
 
-    start = time.time()
-    best_model_wts = copy.deepcopy(model.state_dict())
-    best_epoch_pauc = -np.inf
-    history = defaultdict(list)
-    patience = CONFIG['patience']
-    current_patience = 0
+    start = time.time()  # Start timer
+    best_model_wts = copy.deepcopy(model.state_dict())  # Store initial model weights
+    best_epoch_pauc = -np.inf  # Initialize best pAUC score
+    history = defaultdict(list)  # Store history of training and validation metrics
+    patience = CONFIG['patience']  # Initialize patience counter
+    current_patience = 0  # Initialize current patience counter
+
     print('[INFO] Start training...')
-    # print('[INFO] Architecture: {}'.format(model))
     print('[INFO] Use metadata: {}'.format(use_meta))
-    
+
+    # Train the model for the specified number of epochs
     for epoch in range(1, num_epochs + 1):
-        gc.collect()
+        gc.collect()  # Collect garbage
+
+        # Train the model for one epoch
         train_epoch_loss, train_epoch_pauc = train_one_epoch(model, 
-                                                            optimizer=optimizer, 
-                                                            scheduler=scheduler,
-                                                            dataloader=train_loader,
-                                                            use_meta=use_meta,
-                                                            device=device, 
-                                                            epoch=epoch, 
-                                                            CONFIG=CONFIG)
+                                                             optimizer=optimizer, 
+                                                             scheduler=scheduler,
+                                                             dataloader=train_loader,
+                                                             use_meta=use_meta,
+                                                             device=device, 
+                                                             epoch=epoch, 
+                                                             CONFIG=CONFIG)
 
+        # Validate the model for one epoch
         val_epoch_loss, val_epoch_pauc = valid_one_epoch(model, 
-                                                        dataloader=valid_loader, 
-                                                        use_meta=use_meta,
-                                                        device=device,
-                                                        epoch=epoch)
+                                                         dataloader=valid_loader, 
+                                                         use_meta=use_meta,
+                                                         device=device,
+                                                         epoch=epoch)
 
+        # Store training and validation metrics in history
         history['Train Loss'].append(train_epoch_loss)
         history['Valid Loss'].append(val_epoch_loss)
         history['Train pAUC'].append(train_epoch_pauc)
         history['Valid pAUC'].append(val_epoch_pauc)
         history['lr'].append(scheduler.get_lr()[0])
 
+        # Update best model weights and pAUC score
         if best_epoch_pauc <= val_epoch_pauc:
             print(f"Validation pAUC Improved ({best_epoch_pauc} ---> {val_epoch_pauc})")
             best_epoch_pauc = val_epoch_pauc
@@ -213,19 +254,20 @@ def run_training(model, train_loader, valid_loader, use_meta, optimizer, schedul
                 print(f'Validation loss did not improve for {patience} epochs. Stopping training...')
                 break
         
+        # Print training and validation metrics
         print(f"Epoch {epoch}/{num_epochs} | "
               f"Train Loss: {train_epoch_loss:.4f}, Train pAUC: {train_epoch_pauc:.4f} | "
               f"Valid Loss: {val_epoch_loss:.4f}, Valid pAUC: {val_epoch_pauc:.4f}")
 
-    end = time.time()
-    time_elapsed = end - start
+    end = time.time()  # End timer
+    time_elapsed = end - start  # Calculate elapsed time
     print('Training complete in {:.0f}h {:.0f}m {:.0f}s'.format(
         time_elapsed // 3600, (time_elapsed % 3600) // 60, (time_elapsed % 3600) % 60))
     print("Best pAUC: {:.4f}".format(best_epoch_pauc))
 
-    model.load_state_dict(best_model_wts)
+    model.load_state_dict(best_model_wts)  # Load best model weights
 
-    return model, history
+    return model, history  # Return the trained model and history
 
 def fetch_scheduler(optimizer, CONFIG):
     if CONFIG['scheduler'] == 'CosineAnnealingLR':
