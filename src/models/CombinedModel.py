@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch import optim
 from torchvision import models
+from models.gem_pooling import GeM
 
 class Swish(torch.autograd.Function):
     @staticmethod
@@ -40,7 +41,7 @@ class ImageBranch(nn.Module):
         elif self.model_name == 'efficientnet_b0':
             model = models.efficientnet_b0(pretrained=self.pretrained)
             model.classifier = nn.Identity() 
-            model.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+            model.avgpool = GeM()
         else:
             raise ValueError(f"Unsupported model: {self.model_name}\n Supported models: resnet18, vgg16, efficientnet_b0")
         

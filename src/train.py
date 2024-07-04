@@ -271,7 +271,7 @@ def main():
 
     # Load main data (ISIC 2024)
     print("Loading data...")
-    df = load_data(args.root_dir)
+    df = load_data(args.root_dir, neg_ratio=args.neg_ratio)
     meta_feature_columns = None
     
     if CONFIG['feature_engineering'] == True:
