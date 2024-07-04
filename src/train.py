@@ -9,7 +9,7 @@ import pandas as pd
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from collections import defaultdict
-from data.data_loading import load_data
+from data.data_loading import load_data, downsample
 from data.dataset import ISICDataset_for_Train, ISICDataset, TBP_Dataset
 from data.data_processing import get_transforms, feature_engineering
 from models.isic_model import ISICModel
@@ -344,15 +344,18 @@ def main():
 
     # Load main data (ISIC 2024)
     print("[INFO] Loading data...")
-    df = load_data(args.root_dir, neg_ratio=args.neg_ratio)
+    df = load_data(args.root_dir, neg_ratio=args.neg_ratio) # Default = -1, load all data
     meta_feature_columns = None
     
     # Load additional data if provided
     if args.extra_data_dirs:
         print("[INFO] Loading additional data...")
         for extra_dir in args.extra_data_dirs:
-            extra_df = load_data(extra_dir, neg_ratio=args.neg_ratio)
+            extra_df = load_data(extra_dir, neg_ratio=args.extra_neg_ratio) # Default = 0, load only positive samples
             df = pd.concat([df, extra_df], ignore_index=True).reset_index(drop=True)
+    
+    # Downsample the negative samples
+    df = downsample(df, ratio=CONFIG['data_ratio']) 
     
     if CONFIG['feature_engineering'] == True:
         print("[INFO] Feature Engineering...")

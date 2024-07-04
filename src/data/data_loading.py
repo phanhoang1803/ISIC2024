@@ -1,6 +1,22 @@
 import pandas as pd
 import glob
 
+def downsample(df: pd.DataFrame, ratio: int=20):
+    # Separate positive and negative samples
+    df_positive = df[df['target'] == 1].reset_index(drop=True)
+    df_negative = df[df['target'] == 0].reset_index(drop=True)
+    
+    # Filter df based on negative_ratio
+    if ratio == 0:
+        df = df_positive
+    elif ratio > 0:
+        # Downsample the negative samples
+        df = pd.concat([df_positive, df_negative.iloc[:df_positive.shape[0] * ratio, :]]).reset_index(drop=True)
+    else:
+        df = df
+
+    return df
+
 def load_data(ROOT_DIR, neg_ratio: int=20):
     """
     Load data from the specified ROOT_DIR.
@@ -8,6 +24,9 @@ def load_data(ROOT_DIR, neg_ratio: int=20):
     Args:
         ROOT_DIR (str): The root directory of the data.
         neg_ratio (int): The ratio of negative samples to positive samples.
+            If set to 0, only positive samples are included.
+            If set to a positive value, negative samples are downsampled.
+            If set to a negative value, load all data.
 
     Returns:
         pandas.DataFrame: DataFrame containing the loaded data.
@@ -29,13 +48,8 @@ def load_data(ROOT_DIR, neg_ratio: int=20):
     if 'isic_id' not in df.columns:
         raise KeyError("Column 'isic_id' is missing from the DataFrame.")
 
-    # Separate positive and negative samples
-    df_positive = df[df['target'] == 1].reset_index(drop=True)
-    df_negative = df[df['target'] == 0].reset_index(drop=True)
-
-    # Upsample the negative samples
-    if neg_ratio >= 0:
-        df = pd.concat([df_positive, df_negative.iloc[:df_positive.shape[0] * neg_ratio, :]]).reset_index(drop=True)
+    # Downsample
+    df = downsample(df, neg_ratio)
 
     # Add file path column
     df['file_path'] = df['isic_id'].apply(lambda x: f'{TRAIN_DIR}/{x}.jpg')

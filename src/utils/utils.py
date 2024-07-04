@@ -22,10 +22,12 @@ def parse_arguments():
     parser.add_argument('--checkpoint_path', type=str, help='Checkpoint path') 
     parser.add_argument('--feature_engineering', action='store_true', help='Feature engineering')
     parser.add_argument('--patience', type=int, default=10, help='Patience')
-    parser.add_argument('--neg_ratio', type=int, default=20, help='The ratio of negative samples to positive samples, set to -1 to load all data')
+    parser.add_argument('--neg_ratio', type=int, default=-1, help='0: no negative samples, -1: load all data, >0: downsample negative samples to positive samples as specified')   
+    parser.add_argument('--data_ratio', type=int, default=20, help='The ratio of Negative / Positive. 0: no negative samples, -1: remain all data, > 0: downsample negative samples as specified')
 
     ### Additional data
     parser.add_argument('--extra_data_dirs', type=str, nargs='*', help='List of additional directories containing training data')
+    parser.add_argument('--extra_neg_ratio', type=int, default=0, help='0: no negative samples, -1: load all data, >0: the ratio of negative samples to positive samples as specified')
     
     ### CONFIG
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
