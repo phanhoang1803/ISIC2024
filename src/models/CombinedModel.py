@@ -3,6 +3,7 @@ from torch import nn
 from torch import optim
 from torchvision import models
 import torchvision
+from models.gem_pooling import GeM
 
 class Swish(torch.autograd.Function):
     @staticmethod
@@ -51,7 +52,6 @@ class AttentionBlock(nn.Module):
             torch.Tensor: Output tensor.
         """
         # Reshape input tensor to (batch_size, channels, width * height)
-        print(x.shape)
         batch_size, C, width, height = x.size()
         proj_query = self.query_conv(x).view(batch_size, -1, width * height).permute(0, 2, 1)
         proj_key = self.key_conv(x).view(batch_size, -1, width * height)
@@ -97,7 +97,7 @@ class ImageBranch(nn.Module):
             model.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         elif self.model_name.startswith('efficientnet_b'):
             model.classifier = nn.Identity()
-            model.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+            model.avgpool = nn.Identity()
         else:
             raise ValueError(f"Unsupported model: {self.model_name}\n Supported models: resnet18, vgg16, efficientnet_b 0 to 7")
 
@@ -125,6 +125,7 @@ class ImageBranch(nn.Module):
     def forward(self, x):
         x = self.cnn(x)
         x = self.attention(x)
+        x = GeM()(x)
         x = torch.flatten(x, 1)
         return x
 
