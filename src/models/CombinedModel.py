@@ -127,8 +127,9 @@ class ImageBranch(nn.Module):
         x = self.cnn.features(x)
         print(x.shape)
         x = self.attention(x)
-        x = x.view(x.size(0), -1)
-        x = GeM()(x)
+        x = nn.AdaptiveAvgPool1d((1, 1))(x)
+        # x = x.view(x.size(0), -1)
+        # x = GeM()(x)
         x = torch.flatten(x, 1)
         return x
 
