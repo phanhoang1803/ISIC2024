@@ -97,7 +97,7 @@ class ImageBranch(nn.Module):
             model.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         elif self.model_name.startswith('efficientnet_b'):
             model.classifier = nn.Identity()
-            model.avgpool = nn.Identity()
+            # model.avgpool = nn.Identity()
         else:
             raise ValueError(f"Unsupported model: {self.model_name}\n Supported models: resnet18, vgg16, efficientnet_b 0 to 7")
 
@@ -124,7 +124,7 @@ class ImageBranch(nn.Module):
 
     def forward(self, x):
         print(x.shape)
-        x = self.cnn(x)
+        x = self.cnn.features(x)
         print(x.shape)
         x = self.attention(x)
         x = GeM()(x)
