@@ -93,6 +93,7 @@ class MetadataBranch(nn.Module):
             nn.Linear(hidden_dims[0], output_dim),
             nn.BatchNorm1d(output_dim),
             Swish_Module(),
+            nn.Dropout(p=0.5),
         )
     
     def forward(self, x):
@@ -125,9 +126,13 @@ class CombinedModel(nn.Module):
             self.metadata_branch = MetadataBranch(metadata_dim=metadata_dim, hidden_dims=hidden_dims, output_dim=metadata_output_dim)
             combined_dim += metadata_output_dim
         
+        
+        self.dropouts = nn.ModuleList([
+            nn.Dropout(0.5) for _ in range(5)
+        ])
+        
         # Initialize final layer
         self.fc = nn.Sequential(
-            nn.Dropout(p=0.5),  # Dropout layer
             nn.Linear(combined_dim, 256),  # Hidden layer
             nn.ReLU(),
             
@@ -156,7 +161,13 @@ class CombinedModel(nn.Module):
             x_meta = self.metadata_branch(metadata)
             x = torch.cat([x, x_meta], dim=1)
         
+        for i, dropout in enumerate(self.dropouts):
+            if i == 0:
+                out = self.fc(dropout(x))
+            else:
+                out += self.fc(dropout(x))
+        
         # Pass feature maps through final layer
-        output = self.sigmoid(self.fc(x))
+        output = self.sigmoid(out)
         
         return output
