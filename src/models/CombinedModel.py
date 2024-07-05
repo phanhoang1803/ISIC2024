@@ -3,7 +3,6 @@ from torch import nn
 from torch import optim
 from torchvision import models
 import torchvision
-from models.gem_pooling import GeM
 
 class Swish(torch.autograd.Function):
     @staticmethod
@@ -22,6 +21,51 @@ class Swish_Module(nn.Module):
     def forward(self, x):
         return Swish.apply(x)
 
+
+class AttentionBlock(nn.Module):
+    def __init__(self, in_dim):
+        """
+        Initialize AttentionBlock module.
+
+        Args:
+            in_dim (int): Input dimension.
+        """
+        super(AttentionBlock, self).__init__()
+
+        # Convolutional layers for query, key, and value.
+        self.query_conv = nn.Conv2d(in_dim, in_dim // 8, 1)  # (batch_size, in_dim // 8, width, height)
+        self.key_conv = nn.Conv2d(in_dim, in_dim // 8, 1)  # (batch_size, in_dim // 8, width, height)
+        self.value_conv = nn.Conv2d(in_dim, in_dim, 1)  # (batch_size, in_dim, width, height)
+
+        # Learnable scalar parameter gamma.
+        self.gamma = nn.Parameter(torch.zeros(1))  # (1,)
+
+    def forward(self, x):
+        """
+        Forward pass of the attention block.
+
+        Args:
+            x (torch.Tensor): Input tensor.
+
+        Returns:
+            torch.Tensor: Output tensor.
+        """
+        # Reshape input tensor to (batch_size, channels, width * height)
+        batch_size, C, width, height = x.size()
+        proj_query = self.query_conv(x).view(batch_size, -1, width * height).permute(0, 2, 1)
+        proj_key = self.key_conv(x).view(batch_size, -1, width * height)
+        energy = torch.bmm(proj_query, proj_key)
+        # Compute attention weights
+        attention = torch.softmax(energy, dim=-1)
+        # Reshape value tensor to (batch_size, channels * width * height)
+        proj_value = self.value_conv(x).view(batch_size, -1, width * height)
+        # Compute output tensor
+        out = torch.bmm(proj_value, attention.permute(0, 2, 1))
+        out = out.view(batch_size, C, width, height)
+        # Apply attention weights to input tensor
+        out = self.gamma * out + x
+        return out
+
 class ImageBranch(nn.Module):
     def __init__(self, model_name='efficientnet_b0', pretrained=True):
         super(ImageBranch, self).__init__()
@@ -29,7 +73,8 @@ class ImageBranch(nn.Module):
         self.pretrained = pretrained
         self.cnn = self._create_cnn_model()
         self.output_dim = self._get_output_dim()
-        
+        self.attention = AttentionBlock(self.output_dim)
+
     def _create_cnn_model(self):
         model_architectures = {
             'resnet18': torchvision.models.resnet18,
@@ -43,18 +88,18 @@ class ImageBranch(nn.Module):
             'efficientnet_b6': torchvision.models.efficientnet_b6,
             'efficientnet_b7': torchvision.models.efficientnet_b7
         }
-        
+
         model = model_architectures[self.model_name](pretrained=self.pretrained)
-        
+
         if self.model_name in ['resnet18', 'vgg16']:
             model.fc = nn.Identity()
             model.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         elif self.model_name.startswith('efficientnet_b'):
             model.classifier = nn.Identity()
-            model.avgpool = GeM()
+            model.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         else:
             raise ValueError(f"Unsupported model: {self.model_name}\n Supported models: resnet18, vgg16, efficientnet_b 0 to 7")
-        
+
         return model
 
     def _get_output_dim(self):
@@ -70,14 +115,15 @@ class ImageBranch(nn.Module):
             'efficientnet_b6': 2304,
             'efficientnet_b7': 2560
         }
-        dim = lookup.get(self.model_name, None) 
+        dim = lookup.get(self.model_name, None)
         if dim is None:
             raise ValueError(f"Unsupported model: {self.model_name} \n Supported models: resnet18, vgg16, efficientnet_b 0 to 7")
-        
+
         return dim
 
     def forward(self, x):
         x = self.cnn(x)
+        x = self.attention(x)
         x = torch.flatten(x, 1)
         return x
 
@@ -134,6 +180,7 @@ class CombinedModel(nn.Module):
         # Initialize final layer
         self.fc = nn.Sequential(
             nn.Linear(combined_dim, 256),  # Hidden layer
+            nn.BatchNorm1d(256),
             nn.ReLU(),
             
             nn.Dropout(p=0.5),  # Dropout layer
@@ -161,15 +208,15 @@ class CombinedModel(nn.Module):
             x_meta = self.metadata_branch(metadata)
             x = torch.cat([x, x_meta], dim=1)
         
-        for i, dropout in enumerate(self.dropouts):
-            if i == 0:
-                out = self.fc(dropout(x))
-            else:
-                out += self.fc(dropout(x))
+        # for i, dropout in enumerate(self.dropouts):
+        #     if i == 0:
+        #         out = self.fc(dropout(x))
+        #     else:
+        #         out += self.fc(dropout(x))
         
-        out /= len(self.dropouts)
+        # out /= len(self.dropouts)
         
         # Pass feature maps through final layer
-        output = self.sigmoid(out)
+        output = self.sigmoid(x)
         
         return output
