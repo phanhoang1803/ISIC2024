@@ -123,7 +123,6 @@ class ImageBranch(nn.Module):
         return dim
 
     def forward(self, x):
-        print(x.shape)
         x = self.cnn.features(x)
         x = self.attention(x)
         x = nn.AdaptiveAvgPool2d((1, 1))(x)
