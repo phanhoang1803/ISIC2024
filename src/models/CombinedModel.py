@@ -220,6 +220,7 @@ class CombinedModel(nn.Module):
         # out /= len(self.dropouts)
         
         # Pass feature maps through final layer
+        x = self.fc(x)
         output = self.sigmoid(x)
         
         return output
