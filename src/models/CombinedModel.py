@@ -123,7 +123,9 @@ class ImageBranch(nn.Module):
         return dim
 
     def forward(self, x):
+        print(x.shape)
         x = self.cnn(x)
+        print(x.shape)
         x = self.attention(x)
         x = GeM()(x)
         x = torch.flatten(x, 1)
