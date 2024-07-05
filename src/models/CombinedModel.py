@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch import optim
 from torchvision import models
+import torchvision
 from models.gem_pooling import GeM
 
 class Swish(torch.autograd.Function):
@@ -31,16 +32,16 @@ class ImageBranch(nn.Module):
         
     def _create_cnn_model(self):
         model_architectures = {
-            'resnet18': models.resnet18,
-            'vgg16': models.vgg16,
-            'efficientnet_b0': models.efficientnet_b0,
-            'efficientnet_b1': models.efficientnet_b1,
-            'efficientnet_b2': models.efficientnet_b2,
-            'efficientnet_b3': models.efficientnet_b3,
-            'efficientnet_b4': models.efficientnet_b4,
-            'efficientnet_b5': models.efficientnet_b5,
-            'efficientnet_b6': models.efficientnet_b6,
-            'efficientnet_b7': models.efficientnet_b7
+            'resnet18': torchvision.models.resnet18,
+            'vgg16': torchvision.models.vgg16,
+            'efficientnet_b0': torchvision.models.efficientnet_b0,
+            'efficientnet_b1': torchvision.models.efficientnet_b1,
+            'efficientnet_b2': torchvision.models.efficientnet_b2,
+            'efficientnet_b3': torchvision.models.efficientnet_b3,
+            'efficientnet_b4': torchvision.models.efficientnet_b4,
+            'efficientnet_b5': torchvision.models.efficientnet_b5,
+            'efficientnet_b6': torchvision.models.efficientnet_b6,
+            'efficientnet_b7': torchvision.models.efficientnet_b7
         }
         
         model = model_architectures[self.model_name](pretrained=self.pretrained)
@@ -77,6 +78,7 @@ class ImageBranch(nn.Module):
 
     def forward(self, x):
         x = self.cnn(x)
+        x = torch.flatten(x, 1)
         return x
 
 class MetadataBranch(nn.Module):
@@ -126,7 +128,11 @@ class CombinedModel(nn.Module):
         # Initialize final layer
         self.fc = nn.Sequential(
             nn.Dropout(p=0.5),  # Dropout layer
-            nn.Linear(combined_dim, 1),  # Hidden layer
+            nn.Linear(combined_dim, 256),  # Hidden layer
+            nn.ReLU(),
+            
+            nn.Dropout(p=0.5),  # Dropout layer
+            nn.Linear(256, 1),  # Hidden layer
         )
         
         self.sigmoid = nn.Sigmoid()
