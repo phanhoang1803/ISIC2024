@@ -51,6 +51,7 @@ class AttentionBlock(nn.Module):
             torch.Tensor: Output tensor.
         """
         # Reshape input tensor to (batch_size, channels, width * height)
+        print(x.shape)
         batch_size, C, width, height = x.size()
         proj_query = self.query_conv(x).view(batch_size, -1, width * height).permute(0, 2, 1)
         proj_key = self.key_conv(x).view(batch_size, -1, width * height)
