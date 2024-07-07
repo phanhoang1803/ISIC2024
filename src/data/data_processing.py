@@ -119,8 +119,8 @@ def feature_engineering(df):
         categories='auto',
         dtype=int,
         handle_unknown='use_encoded_value',
-        unknown_value=-2,
-        encoded_missing_value=-1,
+        unknown_value=0,
+        encoded_missing_value=0,
     )
 
     X_cat = category_encoder.fit_transform(df[cat_cols])
