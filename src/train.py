@@ -360,7 +360,7 @@ def main():
         df, meta_feature_columns = feature_engineering(df)
     
     # Downsample the negative samples
-    df = downsample(df, ratio=CONFIG['data_ratio'], seed=CONFIG['seed'], use_clustering=CONFIG['use_clustering'])
+    df = downsample(df, remain_columns=meta_feature_columns, ratio=CONFIG['data_ratio'], seed=CONFIG['seed'], use_clustering=CONFIG['use_clustering'])
     
     print("[INFO] Columns in Final DataFrame:", df.columns)
     print("[INFO] Sample data from Final DataFrame:\n", df.head())

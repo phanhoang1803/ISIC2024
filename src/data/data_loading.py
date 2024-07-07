@@ -2,7 +2,7 @@ import pandas as pd
 import glob
 from sklearn.cluster import KMeans
 
-def downsample(df: pd.DataFrame, ratio: int=20, seed: int=42, use_clustering: bool=False):
+def downsample(df: pd.DataFrame, remain_columns: list, ratio: int=20, seed: int=42, use_clustering: bool=False):
     # Separate positive and negative samples
     df_positive = df[df['target'] == 1].reset_index(drop=True)
     df_negative = df[df['target'] == 0].reset_index(drop=True)
@@ -12,7 +12,7 @@ def downsample(df: pd.DataFrame, ratio: int=20, seed: int=42, use_clustering: bo
         df = df_positive
     elif ratio > 0:                     # downsample negative samples
         if use_clustering:                  # downsample benign samples using clustering
-            df_negative = downsample_benign_samples(df_negative, sample_count=df_positive.shape[0] * ratio, seed=seed)
+            df_negative = downsample_benign_samples(df_negative, sample_count=df_positive.shape[0] * ratio, remain_columns=remain_columns, seed=seed)
         else: 
             df_negative = df_negative.iloc[:df_positive.shape[0] * ratio, :]
             
@@ -74,7 +74,7 @@ def load_data(ROOT_DIR, neg_ratio: int=20):
 
     return df
 
-def downsample_benign_samples(df, sample_count, seed):
+def downsample_benign_samples(df, sample_count, remain_columns, seed):
     """
     Downsample benign samples ensuring diversity by using clustering.
     
@@ -92,8 +92,9 @@ def downsample_benign_samples(df, sample_count, seed):
     num_clusters = sample_count
     kmeans = KMeans(n_clusters=num_clusters, random_state=seed)
     
-    drop_columns = ['target', 'patient_id', 'file_path', 'isic_id']
-    df['cluster'] = kmeans.fit_predict(df.drop(columns=drop_columns))
+    # fit on remaining columns
+    df['cluster'] = kmeans.fit_predict(df[remain_columns])
+    # df['cluster'] = kmeans.fit_predict(df)
     
     # Select one sample from each cluster
     downsampled_benign = df.groupby('cluster').apply(lambda x: x.sample(1, random_state=seed)).reset_index(drop=True)
