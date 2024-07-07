@@ -45,7 +45,7 @@ def parse_arguments():
     parser.add_argument('--train_batch_size', type=int, default=32, help='Train batch size')
     parser.add_argument('--valid_batch_size', type=int, default=64, help='Valid batch size')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='Learning rate')
-    parser.add_argument('--scheduler', type=str, default='CosineAnnealingLR', help='Scheduler')
+    parser.add_argument('--scheduler', type=str, default='CosineAnnealingLR', help='Scheduler', choices=['CosineAnnealingLR', 'CosineAnnealingWarmRestarts', None])
     parser.add_argument('--min_lr', type=float, default=1e-6, help='Minimum learning rate')
     parser.add_argument('--T_max', type=int, default=500, help='T_max for CosineAnnealingLR')
     parser.add_argument('--weight_decay', type=float, default=1e-5, help='Weight decay')
