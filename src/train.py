@@ -354,13 +354,13 @@ def main():
             extra_df = load_data(extra_dir, neg_ratio=args.extra_neg_ratio) # Default = 0, load only positive samples
             df = pd.concat([df, extra_df], ignore_index=True).reset_index(drop=True)
     
-    # Downsample the negative samples
-    df = downsample(df, ratio=CONFIG['data_ratio'], seed=CONFIG['seed'], use_clustering=CONFIG['use_clustering'])
-    
     if CONFIG['feature_engineering'] == True:
         print("[INFO] Feature Engineering...")
         # Perform feature engineering
         df, meta_feature_columns = feature_engineering(df)
+    
+    # Downsample the negative samples
+    df = downsample(df, ratio=CONFIG['data_ratio'], seed=CONFIG['seed'], use_clustering=CONFIG['use_clustering'])
     
     print("[INFO] Columns in Final DataFrame:", df.columns)
     print("[INFO] Sample data from Final DataFrame:\n", df.head())
