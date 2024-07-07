@@ -103,6 +103,7 @@ def feature_engineering(df, use_new_features=True):
         new_num_cols = []
         new_cat_cols = []
         
+        # 'tbp_lv_stdLExt', 
     num_cols = [
         'age_approx', 'clin_size_long_diam_mm', 'tbp_lv_A', 'tbp_lv_Aext', 'tbp_lv_B', 'tbp_lv_Bext', 
         'tbp_lv_C', 'tbp_lv_Cext', 'tbp_lv_H', 'tbp_lv_Hext', 'tbp_lv_L', 
@@ -111,7 +112,7 @@ def feature_engineering(df, use_new_features=True):
         'tbp_lv_deltaLBnorm', 'tbp_lv_eccentricity', 'tbp_lv_minorAxisMM',
         'tbp_lv_nevi_confidence', 'tbp_lv_norm_border', 'tbp_lv_norm_color',
         'tbp_lv_perimeterMM', 'tbp_lv_radial_color_std_max', 'tbp_lv_stdL',
-        'tbp_lv_stdLExt', 'tbp_lv_symm_2axis', 'tbp_lv_symm_2axis_angle',
+        'tbp_lv_symm_2axis', 'tbp_lv_symm_2axis_angle',
         'tbp_lv_x', 'tbp_lv_y', 'tbp_lv_z',
     ] + new_num_cols
     
