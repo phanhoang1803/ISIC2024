@@ -100,8 +100,8 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
     epoch_pauc = pAUC_score(all_outputs, all_targets)
     
     # Update progress bar
-    bar = tqdm(enumerate(dataloader), total=len(dataloader))
-    bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, Train_pAUC=epoch_pauc, LR=optimizer.param_groups[0]['lr'])
+    # bar = tqdm(enumerate(dataloader), total=len(dataloader))
+    # bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, Train_pAUC=epoch_pauc, LR=optimizer.param_groups[0]['lr'])
     
     # Collect garbage
     gc.collect()
@@ -170,8 +170,8 @@ def valid_one_epoch(model, dataloader, use_meta, device, epoch):
     epoch_pAUC = pAUC_score(all_outputs, all_targets)
     
     # Update progress bar
-    bar = tqdm(enumerate(dataloader), total=len(dataloader))
-    bar.set_postfix(Epoch=epoch, Valid_Loss=epoch_loss, Valid_pAUC=epoch_pAUC)
+    # bar = tqdm(enumerate(dataloader), total=len(dataloader))
+    # bar.set_postfix(Epoch=epoch, Valid_Loss=epoch_loss, Valid_pAUC=epoch_pAUC)
     
     # Collect garbage
     gc.collect()
@@ -386,12 +386,12 @@ def main():
         model = EnsembleModel()
     elif CONFIG['architecture'] == 'CombinedAttentionModel':
         model = CombinedAttentionModel(image_model_name=args.model_name, 
-                                       metadata_dim=len(meta_feature_columns) if meta_feature_columns else 0, 
+                                       metadata_dim=len(meta_feature_columns) if CONFIG['use_new_features'] else 0, 
                                        hidden_dims=[512, 128], 
                                        metadata_output_dim=128)
     elif CONFIG['architecture'] == 'CombinedModel':
         model = CombinedModel(image_model_name=args.model_name,
-                              metadata_dim=len(meta_feature_columns) if meta_feature_columns else 0, 
+                              metadata_dim=len(meta_feature_columns) if CONFIG['use_new_features'] else 0, 
                               hidden_dims=[512, 128], 
                               metadata_output_dim=128,
                               use_attention=args.use_attention,
