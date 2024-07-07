@@ -316,6 +316,11 @@ def prepare_loaders(df: pd.DataFrame, fold: int, meta_feature_columns: list, dat
     df_train = df[df.kfold != fold].reset_index(drop=True)
     df_valid = df[df.kfold == fold].reset_index(drop=True)
 
+    print("[INFO] Train set: ")
+    df_train.describe()
+    print("[INFO] Valid set: ")
+    df_valid.describe()
+    
     # Create the datasets
     train_dataset = TBP_Dataset(df_train, meta_feature_columns=meta_feature_columns, transform=data_transforms["train"])
     valid_dataset = TBP_Dataset(df_valid, meta_feature_columns=meta_feature_columns, transform=data_transforms["valid"])
@@ -353,10 +358,10 @@ def main():
             extra_df = load_data(extra_dir, neg_ratio=args.extra_neg_ratio) # Default = 0, load only positive samples
             df = pd.concat([df, extra_df], ignore_index=True).reset_index(drop=True)
     
-    if CONFIG['feature_engineering'] == True:
-        print("[INFO] Feature Engineering...")
-        # Perform feature engineering
-        df, meta_feature_columns = feature_engineering(df, use_new_features=CONFIG['use_new_features'])
+    # if CONFIG['feature_engineering'] == True:
+    print("[INFO] Feature Engineering...")
+    # Perform feature engineering
+    df, meta_feature_columns = feature_engineering(df, use_new_features=CONFIG['use_new_features'])
     
     # Downsample the negative samples
     df = downsample(df, remain_columns=meta_feature_columns, ratio=CONFIG['data_ratio'], seed=CONFIG['seed'], use_clustering=CONFIG['use_clustering'])
