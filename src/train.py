@@ -312,6 +312,9 @@ def prepare_loaders(df: pd.DataFrame, fold: int, meta_feature_columns: list, dat
     Returns:
         tuple: A tuple containing the data loaders for training and validation datasets.
     """
+    # Handle NaNs if present
+    df.fillna(0, inplace=True)  # Replace NaNs with 0 or another appropriate value
+    
     # Split the dataframe into training and validation datasets based on the fold
     df_train = df[df.kfold != fold].reset_index(drop=True)
     df_valid = df[df.kfold == fold].reset_index(drop=True)
