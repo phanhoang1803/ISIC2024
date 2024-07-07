@@ -244,26 +244,6 @@ class MetadataBranch(nn.Module):
         
         return x
 
-
-class MetadataBranch(nn.Module):
-    def __init__(self, metadata_dim, hidden_dims=[512], output_dim=128):
-        super(MetadataBranch, self).__init__()
-        self.meta = nn.Sequential(
-            nn.Linear(metadata_dim, hidden_dims[0]),
-            nn.BatchNorm1d(hidden_dims[0]),
-            Swish_Module(),
-            nn.Dropout(p=0.5),
-            
-            nn.Linear(hidden_dims[0], output_dim),
-            nn.BatchNorm1d(output_dim),
-            Swish_Module(),
-            nn.Dropout(p=0.5),
-        )
-    
-    def forward(self, x):
-        x = self.meta(x)
-        return x
-    
 class CombinedModel(nn.Module):
     def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[512, 128], metadata_output_dim=128, use_attention=True, attention_type='self-attention', num_heads=8):
         """
