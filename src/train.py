@@ -355,7 +355,7 @@ def main():
             df = pd.concat([df, extra_df], ignore_index=True).reset_index(drop=True)
     
     # Downsample the negative samples
-    df = downsample(df, ratio=CONFIG['data_ratio']) 
+    df = downsample(df, ratio=CONFIG['data_ratio'], seed=CONFIG['seed'], use_clustering=CONFIG['use_clustering'])
     
     if CONFIG['feature_engineering'] == True:
         print("[INFO] Feature Engineering...")

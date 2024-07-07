@@ -1,21 +1,29 @@
 import pandas as pd
 import glob
+from sklearn.cluster import KMeans
 
-def downsample(df: pd.DataFrame, ratio: int=20):
+def downsample(df: pd.DataFrame, ratio: int=20, seed: int=42, use_clustering: bool=False):
     # Separate positive and negative samples
     df_positive = df[df['target'] == 1].reset_index(drop=True)
     df_negative = df[df['target'] == 0].reset_index(drop=True)
-    
+        
     # Filter df based on negative_ratio
-    if ratio == 0:
+    if ratio == 0:                      # only include positive samples
         df = df_positive
-    elif ratio > 0:
+    elif ratio > 0:                     # downsample negative samples
+        if use_clustering:                  # downsample benign samples using clustering
+            df_negative = downsample_benign_samples(df_negative, sample_count=df_positive * ratio, seed=seed)
+        else: 
+            df_negative = df_negative.iloc[:df_positive.shape[0] * ratio, :]
+            
         # Downsample the negative samples
-        df = pd.concat([df_positive, df_negative.iloc[:df_positive.shape[0] * ratio, :]]).reset_index(drop=True)
-    else:
+        df = pd.concat([df_positive, df_negative]).reset_index(drop=True)
+    else:                               # load all data
         df = df
 
     return df
+
+
 
 def load_data(ROOT_DIR, neg_ratio: int=20):
     """
@@ -66,41 +74,26 @@ def load_data(ROOT_DIR, neg_ratio: int=20):
 
     return df
 
-# def load_data(ROOT_DIR):
-#     """
-#     Load data from the specified ROOT_DIR.
-
-#     Args:
-#         ROOT_DIR (str): The root directory of the data.
-
-#     Returns:
-#         pandas.DataFrame: DataFrame containing the loaded data.
-#     """    
+def downsample_benign_samples(df, sample_count, seed):
+    """
+    Downsample benign samples ensuring diversity by using clustering.
     
-#     TRAIN_DIR = f'{ROOT_DIR}/train-image/image'
+    Args:
+        benign_df (pd.DataFrame): DataFrame containing benign samples.
+        malignant_count (int): Number of malignant samples to match.
+        seed (int): Random seed for reproducibility.
     
-#     train_images = sorted(glob.glob(f'{TRAIN_DIR}/*.jpg'))
+    Returns:
+        pd.DataFrame: Downsampled benign samples.
+    """
+    print("[INFO] Downsample benign samples using clustering")
     
-#     df = pd.read_csv(f'{ROOT_DIR}/train-metadata.csv')
+    # Use K-Means clustering to find clusters in benign samples
+    num_clusters = sample_count
+    kmeans = KMeans(n_clusters=num_clusters, random_state=seed)
+    df['cluster'] = kmeans.fit_predict(df.drop(columns=['target', 'source', 'kfold', 'patient_id']))
     
-#     print("Columns in DataFrame:", df.columns)
-#     print("Sample data from DataFrame:\n", df.head())
+    # Select one sample from each cluster
+    downsampled_benign = df.groupby('cluster').apply(lambda x: x.sample(1, random_state=seed)).reset_index(drop=True)
     
-#     # Ensure 'isic_id' column is present
-#     if 'isic_id' not in df.columns:
-#         raise KeyError("Column 'isic_id' is missing from the DataFrame.")
-    
-#     # Add file path column
-#     df['file_path'] = df['isic_id'].apply(lambda x: f'{TRAIN_DIR}/{x}.jpg')
-    
-#     # Ensure 'file_path' column is present
-#     if 'file_path' not in df.columns:
-#         raise KeyError("Column 'file_path' is missing from the DataFrame.")
-
-#     # Filter the DataFrame based on the valid file paths
-#     df = df[df['file_path'].isin(train_images)].reset_index(drop=True)
-
-#     # Check and remove columns containing "Unnamed"
-#     df = df.drop(columns=df.columns[df.columns.str.contains('Unnamed')])
-    
-#     return df
+    return downsampled_benign.drop(columns=['cluster'])

@@ -67,14 +67,68 @@ class AttentionBlock(nn.Module):
         out = self.gamma * out + x
         return out
 
+class MultiHeadSelfAttention(nn.Module):
+    def __init__(self, in_dim, num_heads):
+        super(MultiHeadSelfAttention, self).__init__()
+        assert in_dim % num_heads == 0, "in_dim must be divisible by num_heads"
+        
+        self.num_heads = num_heads
+        self.head_dim = in_dim // num_heads
+        
+        self.query_conv = nn.Conv2d(in_dim, in_dim, 1)
+        self.key_conv = nn.Conv2d(in_dim, in_dim, 1)
+        self.value_conv = nn.Conv2d(in_dim, in_dim, 1)
+        
+        self.gamma = nn.Parameter(torch.zeros(1))
+
+    def forward(self, x):
+        batch_size, C, width, height = x.size()
+        q = self.query_conv(x).view(batch_size, self.num_heads, self.head_dim, -1).permute(0, 1, 3, 2)
+        k = self.key_conv(x).view(batch_size, self.num_heads, self.head_dim, -1)
+        v = self.value_conv(x).view(batch_size, self.num_heads, self.head_dim, -1).permute(0, 1, 3, 2)
+        
+        energy = torch.matmul(q, k)
+        attention = torch.softmax(energy, dim=-1)
+        
+        out = torch.matmul(attention, v).permute(0, 1, 3, 2).contiguous().view(batch_size, C, width, height)
+        out = self.gamma * out + x
+        return out
+
+class SEBlock(nn.Module):
+    def __init__(self, in_dim, reduction=16):
+        super(SEBlock, self).__init__()
+        self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.fc1 = nn.Conv2d(in_dim, in_dim // reduction, 1, bias=False)
+        self.relu = nn.ReLU(inplace=True)
+        self.fc2 = nn.Conv2d(in_dim // reduction, in_dim, 1, bias=False)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        batch_size, C, width, height = x.size()
+        y = self.global_avg_pool(x)
+        y = self.fc1(y)
+        y = self.relu(y)
+        y = self.fc2(y)
+        y = self.sigmoid(y)
+        return x * y.expand_as(x)
+
+
 class ImageBranch(nn.Module):
-    def __init__(self, model_name='efficientnet_b0', pretrained=True):
+    def __init__(self, model_name='efficientnet_b0', pretrained=True, attention_type='self-attention', num_heads=8):
         super(ImageBranch, self).__init__()
         self.model_name = model_name
         self.pretrained = pretrained
         self.cnn = self._create_cnn_model()
         self.output_dim = self._get_output_dim()
-        self.attention = AttentionBlock(self.output_dim)
+        
+        if attention_type == 'self-attention':
+            self.attention = AttentionBlock(self.output_dim)
+        elif attention_type == 'se':
+            self.attention = SEBlock(self.output_dim)
+        elif attention_type == 'multihead':
+            self.attention = MultiHeadSelfAttention(self.output_dim, num_heads)
+        else:
+            raise ValueError(f"Unsupported attention type: {attention_type}")
 
     def _create_cnn_model(self):
         model_architectures = {
@@ -129,6 +183,68 @@ class ImageBranch(nn.Module):
         x = torch.flatten(x, 1)
         return x
 
+
+class MetadataAttention(nn.Module):
+    def __init__(self, dim, num_heads=8):
+        super(MetadataAttention, self).__init__()
+        assert dim % num_heads == 0, "dim must be divisible by num_heads"
+        
+        self.num_heads = num_heads
+        self.head_dim = dim // num_heads
+        
+        self.query = nn.Linear(dim, dim)
+        self.key = nn.Linear(dim, dim)
+        self.value = nn.Linear(dim, dim)
+        
+        self.fc_out = nn.Linear(dim, dim)
+        self.scale = torch.sqrt(torch.FloatTensor([self.head_dim]))
+
+    def forward(self, x):
+        batch_size, seq_length, dim = x.size()
+        
+        q = self.query(x).view(batch_size, seq_length, self.num_heads, self.head_dim)
+        k = self.key(x).view(batch_size, seq_length, self.num_heads, self.head_dim)
+        v = self.value(x).view(batch_size, seq_length, self.num_heads, self.head_dim)
+        
+        energy = torch.einsum("bqhd,bkhd->bhqk", [q, k]) / self.scale
+        attention = torch.softmax(energy, dim=-1)
+        
+        out = torch.einsum("bhqk,bvhd->bqhd", [attention, v]).reshape(batch_size, seq_length, dim)
+        out = self.fc_out(out)
+        
+        return out
+
+class MetadataBranch(nn.Module):
+    def __init__(self, metadata_dim, hidden_dims=[512], output_dim=128, use_attention=True, num_heads=8):
+        super(MetadataBranch, self).__init__()
+        self.use_attention = use_attention
+        self.meta = nn.Sequential(
+            nn.Linear(metadata_dim, hidden_dims[0]),
+            nn.BatchNorm1d(hidden_dims[0]),
+            Swish_Module(),
+            nn.Dropout(p=0.5),
+            
+            nn.Linear(hidden_dims[0], output_dim),
+            nn.BatchNorm1d(output_dim),
+            Swish_Module(),
+            nn.Dropout(p=0.5),
+        )
+        
+        if use_attention:
+            self.attention = MetadataAttention(output_dim, num_heads)
+    
+    def forward(self, x):
+        x = self.meta(x)
+        
+        if self.use_attention:
+            # Add a sequence dimension for attention
+            x = x.unsqueeze(1)
+            x = self.attention(x)
+            x = x.squeeze(1)
+        
+        return x
+
+
 class MetadataBranch(nn.Module):
     def __init__(self, metadata_dim, hidden_dims=[512], output_dim=128):
         super(MetadataBranch, self).__init__()
@@ -149,7 +265,7 @@ class MetadataBranch(nn.Module):
         return x
     
 class CombinedModel(nn.Module):
-    def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[512, 128], metadata_output_dim=128):
+    def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[512, 128], metadata_output_dim=128, use_attention=True, num_heads=8):
         """
         Initializes the CombinedAttentionModel with the given hyperparameters.
 
@@ -171,13 +287,8 @@ class CombinedModel(nn.Module):
         
         # Initialize metadata branch if metadata_dim > 0
         if metadata_dim > 0:
-            self.metadata_branch = MetadataBranch(metadata_dim=metadata_dim, hidden_dims=hidden_dims, output_dim=metadata_output_dim)
+            self.metadata_branch = MetadataBranch(metadata_dim=metadata_dim, hidden_dims=hidden_dims, output_dim=metadata_output_dim, use_attention=use_attention, num_heads=num_heads)
             combined_dim += metadata_output_dim
-        
-        
-        self.dropouts = nn.ModuleList([
-            nn.Dropout(0.5) for _ in range(5)
-        ])
         
         # Initialize final layer
         self.fc = nn.Sequential(
@@ -189,7 +300,7 @@ class CombinedModel(nn.Module):
             nn.Linear(256, 1),  # Hidden layer
         )
         
-        self.sigmoid = nn.Sigmoid()
+        # self.sigmoid = nn.Sigmoid()
     
     def forward(self, image, metadata):
         """
@@ -210,16 +321,8 @@ class CombinedModel(nn.Module):
             x_meta = self.metadata_branch(metadata)
             x = torch.cat([x, x_meta], dim=1)
         
-        # for i, dropout in enumerate(self.dropouts):
-        #     if i == 0:
-        #         out = self.fc(dropout(x))
-        #     else:
-        #         out += self.fc(dropout(x))
-        
-        # out /= len(self.dropouts)
-        
         # Pass feature maps through final layer
         x = self.fc(x)
-        output = self.sigmoid(x)
         
-        return output
+        # Because we are using BCEWithLogitsLoss,  we don't need sigmoid here
+        return x
