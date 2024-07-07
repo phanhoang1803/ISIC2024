@@ -311,6 +311,9 @@ class CombinedModel(nn.Module):
             x_meta = self.metadata_branch(metadata)
             x = torch.cat([x, x_meta], dim=1)
         
+        # Dropout
+        x = nn.Dropout(p=0.6)(x)
+        
         # Pass feature maps through final layer
         x = self.fc(x)
         
