@@ -48,10 +48,8 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
     all_targets = []
     all_outputs = []
     
-    # Progress bar for tracking training progress
-    bar = tqdm(enumerate(dataloader), total=len(dataloader))
-    
-    for step, data in bar:
+    # Progress bar for tracking training progress    
+    for step, data in enumerate(dataloader):
         # Move data to device
         images = data['image'].to(device, dtype=torch.float)
         targets = data['target'].to(device, dtype=torch.float)
@@ -102,6 +100,7 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
     epoch_pauc = pAUC_score(all_outputs, all_targets)
     
     # Update progress bar
+    bar = tqdm(enumerate(dataloader), total=len(dataloader))
     bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, Train_pAUC=epoch_pauc, LR=optimizer.param_groups[0]['lr'])
     
     # Collect garbage
@@ -133,8 +132,7 @@ def valid_one_epoch(model, dataloader, use_meta, device, epoch):
     all_outputs = []
     
     # Progress bar for tracking validation progress
-    bar = tqdm(enumerate(dataloader), total=len(dataloader))
-    for step, data in bar:        
+    for step, data in enumerate(dataloader):        
         # Move data to device
         images = data['image'].to(device, dtype=torch.float)
         targets = data['target'].to(device, dtype=torch.float)      
@@ -172,6 +170,7 @@ def valid_one_epoch(model, dataloader, use_meta, device, epoch):
     epoch_pAUC = pAUC_score(all_outputs, all_targets)
     
     # Update progress bar
+    bar = tqdm(enumerate(dataloader), total=len(dataloader))
     bar.set_postfix(Epoch=epoch, Valid_Loss=epoch_loss, Valid_pAUC=epoch_pAUC)
     
     # Collect garbage

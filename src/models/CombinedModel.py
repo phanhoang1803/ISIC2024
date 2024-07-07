@@ -114,12 +114,13 @@ class SEBlock(nn.Module):
 
 
 class ImageBranch(nn.Module):
-    def __init__(self, model_name='efficientnet_b0', pretrained=True, attention_type='self-attention', num_heads=8):
+    def __init__(self, model_name='efficientnet_b0', pretrained=True, use_attention=False, attention_type='self-attention', num_heads=8):
         super(ImageBranch, self).__init__()
         self.model_name = model_name
         self.pretrained = pretrained
         self.cnn = self._create_cnn_model()
         self.output_dim = self._get_output_dim()
+        self.use_attention = use_attention
         
         if attention_type == 'self-attention':
             self.attention = AttentionBlock(self.output_dim)
@@ -178,7 +179,8 @@ class ImageBranch(nn.Module):
 
     def forward(self, x):
         x = self.cnn.features(x)
-        x = self.attention(x)
+        if self.use_attention:
+            x = self.attention(x)
         x = nn.AdaptiveAvgPool2d((1, 1))(x)
         x = torch.flatten(x, 1)
         return x
@@ -215,7 +217,7 @@ class MetadataAttention(nn.Module):
         return out
 
 class MetadataBranch(nn.Module):
-    def __init__(self, metadata_dim, hidden_dims=[512], output_dim=128, use_attention=True, num_heads=8):
+    def __init__(self, metadata_dim, hidden_dims=[512], output_dim=128, use_attention=False, num_heads=8):
         super(MetadataBranch, self).__init__()
         self.use_attention = use_attention
         self.meta = nn.Sequential(
@@ -245,7 +247,7 @@ class MetadataBranch(nn.Module):
         return x
 
 class CombinedModel(nn.Module):
-    def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[512, 128], metadata_output_dim=128, use_attention=True, attention_type='self-attention', num_heads=8):
+    def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[512, 128], metadata_output_dim=128, use_attention=False, attention_type='self-attention', num_heads=8):
         """
         Initializes the CombinedAttentionModel with the given hyperparameters.
 
@@ -262,6 +264,7 @@ class CombinedModel(nn.Module):
         
         self.image_branch = ImageBranch(model_name=image_model_name, 
                                         attention_type=attention_type, 
+                                        use_attention=use_attention,
                                         num_heads=num_heads)
         
         # Calculate combined dimension
