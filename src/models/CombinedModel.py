@@ -265,7 +265,7 @@ class MetadataBranch(nn.Module):
         return x
     
 class CombinedModel(nn.Module):
-    def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[512, 128], metadata_output_dim=128, use_attention=True, num_heads=8):
+    def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[512, 128], metadata_output_dim=128, use_attention=True, attention_type='self-attention', num_heads=8):
         """
         Initializes the CombinedAttentionModel with the given hyperparameters.
 
@@ -280,14 +280,20 @@ class CombinedModel(nn.Module):
         # Initialize hyperparameters
         self.metadata_dim = metadata_dim
         
-        self.image_branch = ImageBranch(model_name=image_model_name)
+        self.image_branch = ImageBranch(model_name=image_model_name, 
+                                        attention_type=attention_type, 
+                                        num_heads=num_heads)
         
         # Calculate combined dimension
         combined_dim = self.image_branch.output_dim 
         
         # Initialize metadata branch if metadata_dim > 0
         if metadata_dim > 0:
-            self.metadata_branch = MetadataBranch(metadata_dim=metadata_dim, hidden_dims=hidden_dims, output_dim=metadata_output_dim, use_attention=use_attention, num_heads=num_heads)
+            self.metadata_branch = MetadataBranch(metadata_dim=metadata_dim, 
+                                                  hidden_dims=hidden_dims, 
+                                                  output_dim=metadata_output_dim, 
+                                                  use_attention=use_attention, 
+                                                  num_heads=num_heads)
             combined_dim += metadata_output_dim
         
         # Initialize final layer
