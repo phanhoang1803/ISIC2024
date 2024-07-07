@@ -111,7 +111,7 @@ def feature_engineering(df):
         'tbp_lv_x', 'tbp_lv_y', 'tbp_lv_z',
     ] + new_num_cols
     
-    cat_cols = ["sex", "tbp_tile_type", "tbp_lv_location", "tbp_lv_location_simple"] + new_cat_cols
+    cat_cols = ["sex", "tbp_tile_type", "tbp_lv_location", "tbp_lv_location_simple", 'anatom_site_general'] + new_cat_cols
     
     meta_feature_columns = num_cols + cat_cols
     
