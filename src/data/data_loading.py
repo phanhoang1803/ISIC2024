@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import glob
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
@@ -90,19 +91,30 @@ def downsample_benign_samples(df, sample_count, remain_columns, seed):
     """
     print("[INFO] Downsample benign samples using clustering")
     
-    # Use K-Means clustering to find clusters in benign samples
+    # Replace infinity values with NaN
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    
+    # Impute NaN values with mean
+    imputer = SimpleImputer(strategy='mean')
+    df[remain_columns] = imputer.fit_transform(df[remain_columns])
+
+    # Clip large values to prevent issues with clustering
+    df[remain_columns] = np.clip(df[remain_columns], -1e9, 1e9)
+
+    # Use K-Means clustering to find clusters in samples
     num_clusters = sample_count
     
     pipeline = Pipeline([
-        ('imputer', SimpleImputer(strategy='mean')),  # Impute NaN values
         ('kmeans', KMeans(n_clusters=num_clusters, random_state=seed))  # Apply KMeans clustering
     ])
 
-    
-    # fit on remaining columns
+    # Fit on remaining columns
     df['cluster'] = pipeline.fit_predict(df[remain_columns])
     
     # Select one sample from each cluster
-    downsampled_benign = df.groupby('cluster').apply(lambda x: x.sample(1, random_state=seed)).reset_index(drop=True)
+    downsampled_samples = df.groupby('cluster').apply(lambda x: x.sample(1, random_state=seed)).reset_index(drop=True)
     
-    return downsampled_benign.drop(columns=['cluster'])
+    # Drop the cluster column before returning
+    downsampled_samples.drop(columns=['cluster'], inplace=True)
+    
+    return downsampled_samples
