@@ -218,21 +218,26 @@ class MetadataAttention(nn.Module):
         return out
 
 class MetadataBranch(nn.Module):
-    def __init__(self, metadata_dim, hidden_dims=[512], output_dim=128, use_attention=False, num_heads=8):
+    def __init__(self, metadata_dim, hidden_dims=[128], output_dim=64, use_attention=False, num_heads=8):
         super(MetadataBranch, self).__init__()
         self.use_attention = use_attention
         self.meta = nn.Sequential(
-            nn.Linear(metadata_dim, hidden_dims[0]),
-            nn.BatchNorm1d(hidden_dims[0]),
-            # Swish_Module(),
-            nn.ReLU(inplace=True),
-            nn.Dropout(p=0.6),
+            # nn.Linear(metadata_dim, hidden_dims[0]),
+            # nn.BatchNorm1d(hidden_dims[0]),
+            # # Swish_Module(),
+            # nn.ReLU(inplace=True),
+            # nn.Dropout(p=0.6),
             
-            nn.Linear(hidden_dims[0], output_dim),
+            # nn.Linear(hidden_dims[0], output_dim),
+            # nn.BatchNorm1d(output_dim),
+            # # Swish_Module(),
+            # nn.ReLU(inplace=True),
+            # nn.Dropout(p=0.6),
+            
+            nn.Linear(metadata_dim, output_dim),
             nn.BatchNorm1d(output_dim),
-            # Swish_Module(),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.6),
+            nn.Dropout(p=0.5),
         )
         
         if use_attention:
@@ -250,7 +255,7 @@ class MetadataBranch(nn.Module):
         return x
 
 class CombinedModel(nn.Module):
-    def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[512, 128], metadata_output_dim=128, use_attention=False, attention_type='self-attention', num_heads=8):
+    def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[128], metadata_output_dim=32, use_attention=False, attention_type='self-attention', num_heads=8):
         """
         Initializes the CombinedAttentionModel with the given hyperparameters.
 
@@ -284,12 +289,17 @@ class CombinedModel(nn.Module):
         
         # Initialize final layer
         self.fc = nn.Sequential(
-            nn.Dropout(p=0.7),
-            nn.Linear(combined_dim, 256),  # Hidden layer
+            nn.Dropout(p=0.5),
+            nn.Linear(combined_dim, 512),  # Hidden layer
+            nn.BatchNorm1d(512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5),
+            
+            nn.Linear(512, 256),
             nn.BatchNorm1d(256),
             nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5),  # Dropout layer
             
-            nn.Dropout(p=0.7),  # Dropout layer
             nn.Linear(256, 1),  # Hidden layer
         )
         

@@ -401,7 +401,7 @@ def main():
         model = CombinedModel(image_model_name=args.model_name,
                               metadata_dim=len(meta_feature_columns) if CONFIG['use_meta'] else 0, 
                               hidden_dims=[512, 128], 
-                              metadata_output_dim=128,
+                              metadata_output_dim=32,
                               use_attention=args.use_attention,
                               attention_type=args.image_attention_type,
                               num_heads=args.num_heads)
