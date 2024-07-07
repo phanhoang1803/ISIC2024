@@ -91,7 +91,7 @@ def downsample_benign_samples(df, sample_count, seed):
     # Use K-Means clustering to find clusters in benign samples
     num_clusters = sample_count
     kmeans = KMeans(n_clusters=num_clusters, random_state=seed)
-    df['cluster'] = kmeans.fit_predict(df.drop(columns=['target', 'source', 'kfold', 'patient_id']))
+    df['cluster'] = kmeans.fit_predict(df.drop(columns=['target', 'patient_id']))
     
     # Select one sample from each cluster
     downsampled_benign = df.groupby('cluster').apply(lambda x: x.sample(1, random_state=seed)).reset_index(drop=True)
