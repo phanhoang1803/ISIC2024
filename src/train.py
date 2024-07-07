@@ -91,7 +91,7 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
         epoch_loss = running_loss / dataset_size
         
         # Update progress bar
-        bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, LR=optimizer.param_groups[0]['lr'])
+        # bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, LR=optimizer.param_groups[0]['lr'])
    
     # Convert targets and outputs to numpy arrays
     all_targets = np.concatenate(all_targets)
@@ -161,7 +161,7 @@ def valid_one_epoch(model, dataloader, use_meta, device, epoch):
         epoch_loss = running_loss / dataset_size
         
         # Update progress bar
-        bar.set_postfix(Epoch=epoch, Valid_Loss=epoch_loss,)   
+        # bar.set_postfix(Epoch=epoch, Valid_Loss=epoch_loss,)   
  
     
     # Convert targets and outputs to numpy arrays
