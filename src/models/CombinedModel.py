@@ -281,11 +281,12 @@ class CombinedModel(nn.Module):
         
         # Initialize final layer
         self.fc = nn.Sequential(
+            nn.Dropout(p=0.6),
             nn.Linear(combined_dim, 256),  # Hidden layer
             nn.BatchNorm1d(256),
             nn.ReLU(),
             
-            nn.Dropout(p=0.5),  # Dropout layer
+            nn.Dropout(p=0.6),  # Dropout layer
             nn.Linear(256, 1),  # Hidden layer
         )
         
