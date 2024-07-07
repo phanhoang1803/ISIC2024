@@ -125,7 +125,7 @@ class ImageBranch(nn.Module):
             self.attention = AttentionBlock(self.output_dim)
         elif attention_type == 'se':
             self.attention = SEBlock(self.output_dim)
-        elif attention_type == 'multihead':
+        elif attention_type == 'multi-head':
             self.attention = MultiHeadSelfAttention(self.output_dim, num_heads)
         else:
             raise ValueError(f"Unsupported attention type: {attention_type}")

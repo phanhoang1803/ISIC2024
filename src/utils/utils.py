@@ -25,7 +25,7 @@ def parse_arguments():
     parser.add_argument('--neg_ratio', type=int, default=-1, help='0: no negative samples, -1: load all data, >0: downsample negative samples to positive samples as specified')   
     parser.add_argument('--data_ratio', type=int, default=20, help='The ratio of Negative / Positive. 0: no negative samples, -1: remain all data, > 0: downsample negative samples as specified')
     parser.add_argument('--use_clustering', action='store_true', help='Use clustering to downsample benign samples')
-    parser.add_argument('--image_attention_type', type=str, default='self-attention', help='Attention type')     # Alway use image attention
+    parser.add_argument('--image_attention_type', type=str, default='self-attention', help='Attention type', choices=['self-attention', 'multi-head', 'se'])     # Alway use image attention
     
     parser.add_argument('--use_meta_attention', action='store_true', help='Use meta attention') 
     parser.add_argument('--num_heads', type=int, default=8, help='Number of attention heads')
