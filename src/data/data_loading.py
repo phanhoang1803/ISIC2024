@@ -1,5 +1,7 @@
 import pandas as pd
 import glob
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
 from sklearn.cluster import KMeans
 
 def downsample(df: pd.DataFrame, remain_columns: list, ratio: int=20, seed: int=42, use_clustering: bool=False):
@@ -90,11 +92,15 @@ def downsample_benign_samples(df, sample_count, remain_columns, seed):
     
     # Use K-Means clustering to find clusters in benign samples
     num_clusters = sample_count
-    kmeans = KMeans(n_clusters=num_clusters, random_state=seed)
+    
+    pipeline = Pipeline([
+        ('imputer', SimpleImputer(strategy='mean')),  # Impute NaN values
+        ('kmeans', KMeans(n_clusters=num_clusters, random_state=seed))  # Apply KMeans clustering
+    ])
+
     
     # fit on remaining columns
-    df['cluster'] = kmeans.fit_predict(df[remain_columns])
-    # df['cluster'] = kmeans.fit_predict(df)
+    df['cluster'] = pipeline.fit_predict(df[remain_columns])
     
     # Select one sample from each cluster
     downsampled_benign = df.groupby('cluster').apply(lambda x: x.sample(1, random_state=seed)).reset_index(drop=True)
