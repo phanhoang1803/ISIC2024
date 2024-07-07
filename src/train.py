@@ -414,7 +414,7 @@ def main():
     model, history = run_training(model, 
                                   train_loader=train_loader, 
                                   valid_loader=valid_loader, 
-                                  use_meta=CONFIG['use_meta']
+                                  use_meta=CONFIG['use_meta'],
                                   optimizer=optimizer, 
                                   scheduler=scheduler, 
                                   device=CONFIG['device'], 
