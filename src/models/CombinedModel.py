@@ -224,12 +224,14 @@ class MetadataBranch(nn.Module):
         self.meta = nn.Sequential(
             nn.Linear(metadata_dim, hidden_dims[0]),
             nn.BatchNorm1d(hidden_dims[0]),
-            Swish_Module(),
+            # Swish_Module(),
+            nn.ReLU(inplace=True),
             nn.Dropout(p=0.6),
             
             nn.Linear(hidden_dims[0], output_dim),
             nn.BatchNorm1d(output_dim),
-            Swish_Module(),
+            # Swish_Module(),
+            nn.ReLU(inplace=True),
             nn.Dropout(p=0.6),
         )
         
@@ -285,7 +287,7 @@ class CombinedModel(nn.Module):
             nn.Dropout(p=0.7),
             nn.Linear(combined_dim, 256),  # Hidden layer
             nn.BatchNorm1d(256),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             
             nn.Dropout(p=0.7),  # Dropout layer
             nn.Linear(256, 1),  # Hidden layer
@@ -311,9 +313,6 @@ class CombinedModel(nn.Module):
         if self.metadata_dim > 0:
             x_meta = self.metadata_branch(metadata)
             x = torch.cat([x, x_meta], dim=1)
-        
-        # Dropout
-        x = nn.Dropout(p=0.7)(x)
         
         # Pass feature maps through final layer
         x = self.fc(x)
