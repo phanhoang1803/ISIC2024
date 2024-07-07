@@ -183,6 +183,7 @@ class ImageBranch(nn.Module):
             x = self.attention(x)
         x = nn.AdaptiveAvgPool2d((1, 1))(x)
         x = torch.flatten(x, 1)
+        x = torch.nn.Dropout(p=0.6)(x)
         return x
 
 
@@ -224,12 +225,12 @@ class MetadataBranch(nn.Module):
             nn.Linear(metadata_dim, hidden_dims[0]),
             nn.BatchNorm1d(hidden_dims[0]),
             Swish_Module(),
-            nn.Dropout(p=0.5),
+            nn.Dropout(p=0.6),
             
             nn.Linear(hidden_dims[0], output_dim),
             nn.BatchNorm1d(output_dim),
             Swish_Module(),
-            nn.Dropout(p=0.5),
+            nn.Dropout(p=0.6),
         )
         
         if use_attention:
@@ -281,12 +282,12 @@ class CombinedModel(nn.Module):
         
         # Initialize final layer
         self.fc = nn.Sequential(
-            nn.Dropout(p=0.6),
+            nn.Dropout(p=0.7),
             nn.Linear(combined_dim, 256),  # Hidden layer
             nn.BatchNorm1d(256),
             nn.ReLU(),
             
-            nn.Dropout(p=0.6),  # Dropout layer
+            nn.Dropout(p=0.7),  # Dropout layer
             nn.Linear(256, 1),  # Hidden layer
         )
         
@@ -312,7 +313,7 @@ class CombinedModel(nn.Module):
             x = torch.cat([x, x_meta], dim=1)
         
         # Dropout
-        x = nn.Dropout(p=0.6)(x)
+        x = nn.Dropout(p=0.7)(x)
         
         # Pass feature maps through final layer
         x = self.fc(x)
