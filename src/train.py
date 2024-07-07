@@ -386,12 +386,12 @@ def main():
         model = EnsembleModel()
     elif CONFIG['architecture'] == 'CombinedAttentionModel':
         model = CombinedAttentionModel(image_model_name=args.model_name, 
-                                       metadata_dim=len(meta_feature_columns) if CONFIG['use_new_features'] else 0, 
+                                       metadata_dim=len(meta_feature_columns) if CONFIG['use_meta'] else 0, 
                                        hidden_dims=[512, 128], 
                                        metadata_output_dim=128)
     elif CONFIG['architecture'] == 'CombinedModel':
         model = CombinedModel(image_model_name=args.model_name,
-                              metadata_dim=len(meta_feature_columns) if CONFIG['use_new_features'] else 0, 
+                              metadata_dim=len(meta_feature_columns) if CONFIG['use_meta'] else 0, 
                               hidden_dims=[512, 128], 
                               metadata_output_dim=128,
                               use_attention=args.use_attention,
@@ -414,7 +414,7 @@ def main():
     model, history = run_training(model, 
                                   train_loader=train_loader, 
                                   valid_loader=valid_loader, 
-                                  use_meta=meta_feature_columns is not None,
+                                  use_meta=CONFIG['use_meta']
                                   optimizer=optimizer, 
                                   scheduler=scheduler, 
                                   device=CONFIG['device'], 
