@@ -4,8 +4,9 @@ import glob
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.cluster import KMeans
+from sklearn.utils import resample
 
-def downsample(df: pd.DataFrame, remain_columns: list, ratio: int=20, seed: int=42, use_clustering: bool=False):
+def downsample(df: pd.DataFrame, remain_columns: list, ratio: int=20, seed: int=42, down_type: str=None):
     # Separate positive and negative samples
     df_positive = df[df['target'] == 1].reset_index(drop=True)
     df_negative = df[df['target'] == 0].reset_index(drop=True)
@@ -14,8 +15,13 @@ def downsample(df: pd.DataFrame, remain_columns: list, ratio: int=20, seed: int=
     if ratio == 0:                      # only include positive samples
         df = df_positive
     elif ratio > 0:                     # downsample negative samples
-        if use_clustering:                  # downsample benign samples using clustering
+        if down_type == 'clustering':                  # downsample benign samples using clustering
             df_negative = downsample_benign_samples(df_negative, sample_count=df_positive.shape[0] * ratio, remain_columns=remain_columns, seed=seed)
+        elif down_type == 'random':          # downsample benign samples randomly
+            df_negative = resample(df_negative, 
+                                   replace=False, 
+                                   n_samples=df_positive.shape[0] * ratio, 
+                                   random_state=seed)
         else: 
             df_negative = df_negative.iloc[:df_positive.shape[0] * ratio, :]
             
