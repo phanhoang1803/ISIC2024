@@ -357,7 +357,7 @@ def main():
     if CONFIG['feature_engineering'] == True:
         print("[INFO] Feature Engineering...")
         # Perform feature engineering
-        df, meta_feature_columns = feature_engineering(df)
+        df, meta_feature_columns = feature_engineering(df, use_new_features=CONFIG['use_new_features'])
     
     # Downsample the negative samples
     df = downsample(df, remain_columns=meta_feature_columns, ratio=CONFIG['data_ratio'], seed=CONFIG['seed'], use_clustering=CONFIG['use_clustering'])
