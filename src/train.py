@@ -97,7 +97,7 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
     
     
     # Calculate pAUC score
-    epoch_pauc = pAUC_score(all_outputs, all_targets)
+    epoch_pauc = pAUC_score(torch.nn.Sigmoid()(all_outputs), all_targets)
     
     # Update progress bar
     # bar = tqdm(enumerate(dataloader), total=len(dataloader))
@@ -167,7 +167,7 @@ def valid_one_epoch(model, dataloader, use_meta, device, epoch):
     all_outputs = np.concatenate(all_outputs)
     
     # Calculate pAUC score
-    epoch_pAUC = pAUC_score(all_outputs, all_targets)
+    epoch_pAUC = pAUC_score(torch.nn.Sigmoid()(all_outputs), all_targets)
     
     # Update progress bar
     # bar = tqdm(enumerate(dataloader), total=len(dataloader))
