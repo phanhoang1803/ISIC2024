@@ -12,7 +12,7 @@ def downsample(df: pd.DataFrame, ratio: int=20, seed: int=42, use_clustering: bo
         df = df_positive
     elif ratio > 0:                     # downsample negative samples
         if use_clustering:                  # downsample benign samples using clustering
-            df_negative = downsample_benign_samples(df_negative, sample_count=df_positive * ratio, seed=seed)
+            df_negative = downsample_benign_samples(df_negative, sample_count=df_positive.shape[0] * ratio, seed=seed)
         else: 
             df_negative = df_negative.iloc[:df_positive.shape[0] * ratio, :]
             
@@ -91,7 +91,9 @@ def downsample_benign_samples(df, sample_count, seed):
     # Use K-Means clustering to find clusters in benign samples
     num_clusters = sample_count
     kmeans = KMeans(n_clusters=num_clusters, random_state=seed)
-    df['cluster'] = kmeans.fit_predict(df.drop(columns=['target', 'patient_id']))
+    
+    drop_columns = ['target', 'patient_id', 'file_path', 'isic_id']
+    df['cluster'] = kmeans.fit_predict(df.drop(columns=drop_columns))
     
     # Select one sample from each cluster
     downsampled_benign = df.groupby('cluster').apply(lambda x: x.sample(1, random_state=seed)).reset_index(drop=True)
