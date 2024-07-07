@@ -105,7 +105,7 @@ def downsample_benign_samples(df, sample_count, remain_columns, seed):
     num_clusters = sample_count
     
     pipeline = Pipeline([
-        ('kmeans', KMeans(n_clusters=num_clusters, random_state=seed))  # Apply KMeans clustering
+        ('kmeans', KMeans(n_clusters=num_clusters, random_state=seed, verbose=True))  # Apply KMeans clustering
     ])
 
     # Fit on remaining columns
