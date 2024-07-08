@@ -75,7 +75,7 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
         # Step the optimizer and scheduler
         if (step + 1) % CONFIG['n_accumulate'] == 0:
             # Clip gradients
-            torch.nn.utils.clip_grad_norm_(model.parameters(), CONFIG['max_grad_norm'])
+            # torch.nn.utils.clip_grad_norm_(model.parameters(), CONFIG['max_grad_norm'])
             
             optimizer.step()
             optimizer.zero_grad()
