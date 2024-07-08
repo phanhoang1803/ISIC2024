@@ -22,114 +22,13 @@ class Swish_Module(nn.Module):
     def forward(self, x):
         return Swish.apply(x)
 
-
-class AttentionBlock(nn.Module):
-    def __init__(self, in_dim):
-        """
-        Initialize AttentionBlock module.
-
-        Args:
-            in_dim (int): Input dimension.
-        """
-        super(AttentionBlock, self).__init__()
-
-        # Convolutional layers for query, key, and value.
-        self.query_conv = nn.Conv2d(in_dim, in_dim // 8, 1)  # (batch_size, in_dim // 8, width, height)
-        self.key_conv = nn.Conv2d(in_dim, in_dim // 8, 1)  # (batch_size, in_dim // 8, width, height)
-        self.value_conv = nn.Conv2d(in_dim, in_dim, 1)  # (batch_size, in_dim, width, height)
-
-        # Learnable scalar parameter gamma.
-        self.gamma = nn.Parameter(torch.zeros(1))  # (1,)
-
-    def forward(self, x):
-        """
-        Forward pass of the attention block.
-
-        Args:
-            x (torch.Tensor): Input tensor.
-
-        Returns:
-            torch.Tensor: Output tensor.
-        """
-        # Reshape input tensor to (batch_size, channels, width * height)
-        batch_size, C, width, height = x.size()
-        proj_query = self.query_conv(x).view(batch_size, -1, width * height).permute(0, 2, 1)
-        proj_key = self.key_conv(x).view(batch_size, -1, width * height)
-        energy = torch.bmm(proj_query, proj_key)
-        # Compute attention weights
-        attention = torch.softmax(energy, dim=-1)
-        # Reshape value tensor to (batch_size, channels * width * height)
-        proj_value = self.value_conv(x).view(batch_size, -1, width * height)
-        # Compute output tensor
-        out = torch.bmm(proj_value, attention.permute(0, 2, 1))
-        out = out.view(batch_size, C, width, height)
-        # Apply attention weights to input tensor
-        out = self.gamma * out + x
-        return out
-
-class MultiHeadSelfAttention(nn.Module):
-    def __init__(self, in_dim, num_heads):
-        super(MultiHeadSelfAttention, self).__init__()
-        assert in_dim % num_heads == 0, "in_dim must be divisible by num_heads"
-        
-        self.num_heads = num_heads
-        self.head_dim = in_dim // num_heads
-        
-        self.query_conv = nn.Conv2d(in_dim, in_dim, 1)
-        self.key_conv = nn.Conv2d(in_dim, in_dim, 1)
-        self.value_conv = nn.Conv2d(in_dim, in_dim, 1)
-        
-        self.gamma = nn.Parameter(torch.zeros(1))
-
-    def forward(self, x):
-        batch_size, C, width, height = x.size()
-        q = self.query_conv(x).view(batch_size, self.num_heads, self.head_dim, -1).permute(0, 1, 3, 2)
-        k = self.key_conv(x).view(batch_size, self.num_heads, self.head_dim, -1)
-        v = self.value_conv(x).view(batch_size, self.num_heads, self.head_dim, -1).permute(0, 1, 3, 2)
-        
-        energy = torch.matmul(q, k)
-        attention = torch.softmax(energy, dim=-1)
-        
-        out = torch.matmul(attention, v).permute(0, 1, 3, 2).contiguous().view(batch_size, C, width, height)
-        out = self.gamma * out + x
-        return out
-
-class SEBlock(nn.Module):
-    def __init__(self, in_dim, reduction=16):
-        super(SEBlock, self).__init__()
-        self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.fc1 = nn.Conv2d(in_dim, in_dim // reduction, 1, bias=False)
-        self.relu = nn.ReLU(inplace=True)
-        self.fc2 = nn.Conv2d(in_dim // reduction, in_dim, 1, bias=False)
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, x):
-        batch_size, C, width, height = x.size()
-        y = self.global_avg_pool(x)
-        y = self.fc1(y)
-        y = self.relu(y)
-        y = self.fc2(y)
-        y = self.sigmoid(y)
-        return x * y.expand_as(x)
-
-
 class ImageBranch(nn.Module):
-    def __init__(self, model_name='efficientnet_b0', pretrained=True, use_attention=False, attention_type='self-attention', num_heads=8):
+    def __init__(self, model_name='efficientnet_b0', pretrained=True):
         super(ImageBranch, self).__init__()
         self.model_name = model_name
         self.pretrained = pretrained
         self.cnn = self._create_cnn_model()
         self.output_dim = self._get_output_dim()
-        self.use_attention = use_attention
-        
-        if attention_type == 'self-attention':
-            self.attention = AttentionBlock(self.output_dim)
-        elif attention_type == 'se':
-            self.attention = SEBlock(self.output_dim)
-        elif attention_type == 'multi-head':
-            self.attention = MultiHeadSelfAttention(self.output_dim, num_heads)
-        else:
-            raise ValueError(f"Unsupported attention type: {attention_type}")
 
     def _create_cnn_model(self):
         model_architectures = {
@@ -206,57 +105,16 @@ class ImageBranch(nn.Module):
         return dim
 
     def forward(self, x):
-        if self.model_name == 'simple_cnn':
-            x = self.cnn(x)
-        elif self.model_name == 'resnet18':
-            x = self.cnn(x)
-        else:
-            x = self.cnn.features(x)
-            
-        if self.use_attention:
-            x = self.attention(x)
+        x = self.cnn(x)
         x = nn.AdaptiveAvgPool2d((1, 1))(x)
         x = torch.flatten(x, 1)
-        x = torch.nn.Dropout(p=0.7)(x)
+        # x = torch.nn.Dropout(p=0.5)(x)
         return x
 
-
-class MetadataAttention(nn.Module):
-    def __init__(self, dim, num_heads=8):
-        super(MetadataAttention, self).__init__()
-        assert dim % num_heads == 0, "dim must be divisible by num_heads"
-        
-        self.num_heads = num_heads
-        self.head_dim = dim // num_heads
-        
-        self.query = nn.Linear(dim, dim)
-        self.key = nn.Linear(dim, dim)
-        self.value = nn.Linear(dim, dim)
-        
-        self.fc_out = nn.Linear(dim, dim)
-        self.scale = torch.sqrt(torch.tensor([self.head_dim], dtype=torch.float32))
-
-    def forward(self, x):
-        batch_size, seq_length, dim = x.size()
-        
-        q = self.query(x).view(batch_size, seq_length, self.num_heads, self.head_dim)
-        k = self.key(x).view(batch_size, seq_length, self.num_heads, self.head_dim)
-        v = self.value(x).view(batch_size, seq_length, self.num_heads, self.head_dim)
-        
-        scale = self.scale.to(x.device)
-        
-        energy = torch.einsum("bqhd,bkhd->bhqk", [q, k]) / scale
-        attention = torch.softmax(energy, dim=-1)
-        
-        out = torch.einsum("bhqk,bvhd->bqhd", [attention, v]).reshape(batch_size, seq_length, dim)
-        out = self.fc_out(out)
-        
-        return out
-
 class MetadataBranch(nn.Module):
-    def __init__(self, metadata_dim, hidden_dims=[128], output_dim=64, use_attention=False, num_heads=8):
+    def __init__(self, metadata_dim, hidden_dims=[128], output_dim=64):
         super(MetadataBranch, self).__init__()
-        self.use_attention = use_attention
+        
         self.meta = nn.Sequential(
             nn.Linear(metadata_dim, hidden_dims[0]),
             nn.BatchNorm1d(hidden_dims[0]),
@@ -269,29 +127,14 @@ class MetadataBranch(nn.Module):
             # Swish_Module(),
             nn.ReLU(inplace=True),
             nn.Dropout(p=0.5),
-            
-            # nn.Linear(metadata_dim, output_dim),
-            # nn.BatchNorm1d(output_dim),
-            # nn.ReLU(inplace=True),
-            # nn.Dropout(p=0.5),
         )
-        
-        if use_attention:
-            self.attention = MetadataAttention(output_dim, num_heads)
     
     def forward(self, x):
         x = self.meta(x)
-        
-        if self.use_attention:
-            # Add a sequence dimension for attention
-            x = x.unsqueeze(1)
-            x = self.attention(x)
-            x = x.squeeze(1)
-        
         return x
 
 class CombinedModel(nn.Module):
-    def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[128], metadata_output_dim=32, use_attention=False, attention_type='self-attention', num_heads=8):
+    def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[128], metadata_output_dim=32, num_heads=8):
         """
         Initializes the CombinedAttentionModel with the given hyperparameters.
 
@@ -304,29 +147,25 @@ class CombinedModel(nn.Module):
         super(CombinedModel, self).__init__()
         
         # Initialize hyperparameters
-        self.metadata_dim = metadata_dim
-        
-        self.image_branch = ImageBranch(model_name=image_model_name, 
-                                        attention_type=attention_type, 
-                                        use_attention=use_attention,
-                                        num_heads=num_heads)
-        
-        # Calculate combined dimension
-        combined_dim = self.image_branch.output_dim 
+        self.image_branch = ImageBranch(model_name=image_model_name)
+        combined_dim = self.image_branch.output_dim
         
         # Initialize metadata branch if metadata_dim > 0
         if metadata_dim > 0:
             self.metadata_branch = MetadataBranch(metadata_dim=metadata_dim, 
                                                   hidden_dims=hidden_dims, 
-                                                  output_dim=metadata_output_dim, 
-                                                  use_attention=use_attention, 
-                                                  num_heads=num_heads)
+                                                  output_dim=metadata_output_dim)
+            
+            # self.attention_fusion = AttentionalFeatureFusion(self.image_branch.output_dim, metadata_output_dim)
             combined_dim += metadata_output_dim
+        
+        self.multihead_attention = nn.MultiheadAttention(embed_dim=self.image_branch.output_dim + metadata_output_dim,
+                                                        num_heads=num_heads)
         
         # Initialize final layer
         self.fc = nn.Sequential(
             nn.Dropout(p=0.5),
-            nn.Linear(combined_dim, 512),  # Hidden layer
+            nn.Linear(combined_dim, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(inplace=True),
             nn.Dropout(p=0.5),
@@ -334,13 +173,10 @@ class CombinedModel(nn.Module):
             nn.Linear(512, 256),
             nn.BatchNorm1d(256),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.5),  # Dropout layer
+            nn.Dropout(p=0.5),
             
-            nn.Linear(256, 1),  # Hidden layer
+            nn.Linear(256, 1),
         )
-        
-        # self.sigmoid = nn.Sigmoid()
-    
     def forward(self, image, metadata):
         """
         Forward pass of the combined attention model.
@@ -353,15 +189,27 @@ class CombinedModel(nn.Module):
             torch.Tensor: The output tensor after passing through the model.
         """
         # Pass image through image branch and attention
-        x = self.image_branch(image)
+        image_features = self.image_branch(image)
         
         # If metadata dimension is greater than zero, pass metadata through metadata branch and attention
+        fused_features = image_features
         if self.metadata_dim > 0:
-            x_meta = self.metadata_branch(metadata)
-            x = torch.cat([x, x_meta], dim=1)
+            metadata_features  = self.metadata_branch(metadata)
+            
+            fused_features = torch.cat([image_features, metadata_features], dim=1)
+    
+        
+        # Reshape for MultiheadAttention input (seq_len, batch_size, embed_dim)
+        fused_features = fused_features.permute(1, 0, 2)
+        
+        # Apply MultiheadAttention
+        attn_output, _ = self.multihead_attention(fused_features, fused_features, fused_features)
+        
+        # Reshape output back to (batch_size, seq_len, embed_dim)
+        attn_output = attn_output.permute(1, 0, 2)
         
         # Pass feature maps through final layer
-        x = self.fc(x)
+        output = self.fc(attn_output)
         
         # Because we are using BCEWithLogitsLoss,  we don't need sigmoid here
-        return x
+        return output
