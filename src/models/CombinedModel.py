@@ -44,12 +44,12 @@ class ImageBranch(nn.Module):
             'efficientnet_b7': torchvision.models.efficientnet_b7
         }
 
+        model = model_architectures[self.model_name](pretrained=self.pretrained)
+
         if self.model_name in ['resnet18', 'vgg16']:
-            model = model_architectures[self.model_name](pretrained=self.pretrained)
             model.fc = nn.Identity()
             model.avgpool = nn.Identity()
         elif self.model_name.startswith('efficientnet_b'):
-            model = model_architectures[self.model_name](pretrained=self.pretrained)
             model.classifier = nn.Identity()
             model.avgpool = nn.Identity()
         else:
@@ -78,9 +78,9 @@ class ImageBranch(nn.Module):
 
     def forward(self, x):
         x = self.cnn(x)
-        x = nn.AdaptiveAvgPool1d(1)(x)
-        print(x.shape)
-        x = torch.flatten(x, 1)
+        # x = nn.AdaptiveAvgPool1d(1)(x)
+        # print(x.shape)
+        # x = torch.flatten(x, 1)
         # x = torch.nn.Dropout(p=0.5)(x)
         return x
 
