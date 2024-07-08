@@ -236,7 +236,7 @@ def run_training(model, train_loader, valid_loader, use_meta, optimizer, schedul
         history['Valid Loss'].append(val_epoch_loss)
         history['Train pAUC'].append(train_epoch_pauc)
         history['Valid pAUC'].append(val_epoch_pauc)
-        history['lr'].append(scheduler.get_lr()[0])
+        history['lr'].append(scheduler.get_last_lr()[0])
 
         # Update best model weights and pAUC score
         if best_epoch_pauc <= val_epoch_pauc:
