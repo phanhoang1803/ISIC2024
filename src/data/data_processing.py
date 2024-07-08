@@ -145,11 +145,11 @@ def feature_engineering(df, use_new_features=True):
         "tbp_lv_deltaLBnorm",
         "clin_size_long_diam_mm",
         "tbp_lv_C",
-        "mean_hue_differenece",
+        "mean_hue_difference",
         "tbp_lv_Hext",
         "tbp_lv_A",
         "tbp_lv_symm_2axis",
-        "lesion_severity",
+        "lesion_severity_index",
         "tbp_lv_symm_2axis_angle"
     ]
     
