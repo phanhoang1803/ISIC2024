@@ -51,7 +51,7 @@ class ImageBranch(nn.Module):
             model.avgpool = nn.Identity()
         elif self.model_name.startswith('efficientnet_b'):
             model.classifier = nn.Identity()
-            model.avgpool = nn.Identity()
+            # model.avgpool = nn.Identity()
         else:
             raise ValueError(f"Unsupported model: {self.model_name}\n Supported models: resnet18, vgg16, efficientnet_b 0 to 7")
 
