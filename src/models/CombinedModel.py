@@ -256,22 +256,22 @@ class MetadataBranch(nn.Module):
         super(MetadataBranch, self).__init__()
         self.use_attention = use_attention
         self.meta = nn.Sequential(
-            # nn.Linear(metadata_dim, hidden_dims[0]),
-            # nn.BatchNorm1d(hidden_dims[0]),
-            # # Swish_Module(),
-            # nn.ReLU(inplace=True),
-            # nn.Dropout(p=0.6),
-            
-            # nn.Linear(hidden_dims[0], output_dim),
-            # nn.BatchNorm1d(output_dim),
-            # # Swish_Module(),
-            # nn.ReLU(inplace=True),
-            # nn.Dropout(p=0.6),
-            
-            nn.Linear(metadata_dim, output_dim),
-            nn.BatchNorm1d(output_dim),
+            nn.Linear(metadata_dim, hidden_dims[0]),
+            nn.BatchNorm1d(hidden_dims[0]),
+            # Swish_Module(),
             nn.ReLU(inplace=True),
             nn.Dropout(p=0.5),
+            
+            nn.Linear(hidden_dims[0], output_dim),
+            nn.BatchNorm1d(output_dim),
+            # Swish_Module(),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5),
+            
+            # nn.Linear(metadata_dim, output_dim),
+            # nn.BatchNorm1d(output_dim),
+            # nn.ReLU(inplace=True),
+            # nn.Dropout(p=0.5),
         )
         
         if use_attention:

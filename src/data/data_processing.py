@@ -120,6 +120,39 @@ def feature_engineering(df, use_new_features=True):
     
     meta_feature_columns = num_cols + cat_cols
     
+    meta_feature_columns = [
+        "tbp_lv_z", 
+        "tbp_lv_nevi_confidence",
+        "color_uniformity",
+        "hue_contrast", 
+        "tbp_lv_Lext",
+        "tbp_lv_deltaB",
+        "normalized_lesion_size",
+        "age_approx",
+        "3d_position_distance",
+        "color_contrast_index",
+        "tbp_lv_deltaA",
+        "tbp_lv_B",
+        "tbp_lv_eccentricity",
+        "tbp_lv_y",
+        "tbp_lv_Bext",
+        "lesion_size_ratio",
+        "size_age_interaction",
+        "3d_lesion_orientation",
+        "overall_color_difference",
+        "lesion_color_difference",
+        "tbp_lv_x",
+        "tbp_lv_deltaLBnorm",
+        "clin_size_long_diam_mm",
+        "tbp_lv_C",
+        "mean_hue_differenece",
+        "tbp_lv_Hext",
+        "tbp_lv_A",
+        "tbp_lv_symm_2axis",
+        "lesion_severity",
+        "tbp_lv_symm_2axis_angle"
+    ]
+    
     category_encoder = OrdinalEncoder(
         categories='auto',
         dtype=int,
