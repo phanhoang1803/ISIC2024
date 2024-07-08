@@ -65,7 +65,7 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
         outputs = model(images, meta).squeeze()
         
         # Calculate loss
-        loss = criterion(outputs, targets, pos_weight=CONFIG['pos_weight'])
+        loss = criterion(outputs, targets, pos_weight=CONFIG['pos_weight'], loss=CONFIG['loss'])
         loss = loss / CONFIG['n_accumulate']
            
         # Backward pass and optimization
@@ -151,7 +151,7 @@ def valid_one_epoch(model, dataloader, use_meta, device, epoch, CONFIG):
 
         # Perform forward pass
         outputs = model(images, meta).squeeze()
-        loss = criterion(outputs, targets, pos_weight=CONFIG['pos_weight'])
+        loss = criterion(outputs, targets, pos_weight=CONFIG['pos_weight'], loss=CONFIG['loss'])
         
         # Collect targets and outputs
         all_targets.append(targets.detach().cpu().numpy())

@@ -39,7 +39,26 @@ class PAUCLoss(nn.Module):
 
         return loss
 
-def criterion(outputs, targets, pos_weight=20.0):
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=1, gamma=2, reduction='mean'):
+        super(FocalLoss, self).__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+        self.reduction = reduction
+
+    def forward(self, inputs, targets):
+        BCE_loss = nn.functional.binary_cross_entropy_with_logits(inputs, targets, reduction='none')
+        pt = torch.exp(-BCE_loss)
+        F_loss = self.alpha * (1-pt)**self.gamma * BCE_loss
+
+        if self.reduction == 'mean':
+            return torch.mean(F_loss)
+        elif self.reduction == 'sum':
+            return torch.sum(F_loss)
+        else:
+            return F_loss
+
+def criterion(outputs, targets, pos_weight=20.0, loss='bce_with_logits'):
     """
     Calculate the binary cross entropy loss between the model's outputs and the targets.
     
@@ -52,9 +71,16 @@ def criterion(outputs, targets, pos_weight=20.0):
     """
     # Calculate the binary cross entropy loss using the BCELoss function from torch.nn.
     # The BCELoss function takes the model's outputs and the true targets as input.
-    # return nn.BCELoss()(outputs, targets)
-    return nn.BCEWithLogitsLoss(pos_weight=torch.tensor([pos_weight]).to(outputs.device))(outputs, targets)
-    # return PAUCLoss()(targets, outputs)
+    if loss == 'bce':
+        return nn.BCELoss()(outputs, targets)
+    elif loss == 'bce_with_logits':
+        return nn.BCEWithLogitsLoss(pos_weight=torch.tensor([pos_weight]).to(outputs.device))(outputs, targets)
+    elif loss == 'focal':
+        return FocalLoss()(outputs, targets)
+    elif loss == 'pauc':
+        return PAUCLoss()(targets, outputs)
+    else:
+        raise ValueError(f"Invalid loss function: {loss}")
 
 def pAUC_score(outputs, targets, min_tpr: float=0.80):
     """

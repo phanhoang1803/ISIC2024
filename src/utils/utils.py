@@ -37,6 +37,7 @@ def parse_arguments():
     
     parser.add_argument('--pos_weight', type=float, default=1.0, help='Positive weight')
     parser.add_argument('--max_grad_norm', type=float, default=1.0, help='Max gradient norm')
+    parser.add_argument('--loss', type=str, default='bce_with_logits', help='Loss function', choices=['bce', 'bce_with_logits', 'focal', 'pauc'])
     
     ### Additional data
     parser.add_argument('--extra_data_dirs', type=str, nargs='*', help='List of additional directories containing training data')
