@@ -153,11 +153,38 @@ class ImageBranch(nn.Module):
         elif self.model_name.startswith('efficientnet_b'):
             model.classifier = nn.Identity()
             # model.avgpool = nn.Identity()
+        elif self.model_name == 'simple_cnn':
+            model = self.__create_simple_cnn_model()
         else:
             raise ValueError(f"Unsupported model: {self.model_name}\n Supported models: resnet18, vgg16, efficientnet_b 0 to 7")
 
         return model
 
+    def __create_simple_cnn_model(self):
+        model = nn.Sequential(
+            nn.Conv2d(3, 64, kernel_size=5, stride=1, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=0),
+            
+            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=0),
+            
+            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=0),
+            
+            nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=0),
+        )
+        
+        return model
+    
     def _get_output_dim(self):
         lookup = {
             'resnet18': 512,
@@ -169,7 +196,8 @@ class ImageBranch(nn.Module):
             'efficientnet_b4': 1792,
             'efficientnet_b5': 2048,
             'efficientnet_b6': 2304,
-            'efficientnet_b7': 2560
+            'efficientnet_b7': 2560,
+            'simple_cnn': 512
         }
         dim = lookup.get(self.model_name, None)
         if dim is None:
