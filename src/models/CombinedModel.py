@@ -77,9 +77,12 @@ class ImageBranch(nn.Module):
         return dim
 
     def forward(self, x):
+        features = self.cnn.features(x)
+        print("ImageBranch: features.shape", features.shape)
+        
         x = self.cnn(x)
-        # x = nn.AdaptiveAvgPool1d(1)(x)
         print("ImageBranch: x.shape", x.shape)
+        # x = nn.AdaptiveAvgPool1d(1)(x)
         # x = torch.flatten(x, 1)
         # x = torch.nn.Dropout(p=0.5)(x)
         return x
