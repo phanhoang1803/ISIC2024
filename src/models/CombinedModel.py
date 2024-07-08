@@ -243,6 +243,9 @@ class MetadataAttention(nn.Module):
         k = self.key(x).view(batch_size, seq_length, self.num_heads, self.head_dim)
         v = self.value(x).view(batch_size, seq_length, self.num_heads, self.head_dim)
         
+        # Move scale tensor to the same device as q and k
+        scale = self.scale.to(x.device)
+        
         energy = torch.einsum("bqhd,bkhd->bhqk", [q, k]) / self.scale
         attention = torch.softmax(energy, dim=-1)
         
