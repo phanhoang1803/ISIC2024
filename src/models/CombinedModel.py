@@ -148,7 +148,7 @@ class ImageBranch(nn.Module):
         if self.model_name in ['resnet18', 'vgg16']:
             model = model_architectures[self.model_name](pretrained=self.pretrained)
             model.fc = nn.Identity()
-            model.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+            model.avgpool = nn.Identity()
         elif self.model_name.startswith('efficientnet_b'):
             model = model_architectures[self.model_name](pretrained=self.pretrained)
             model.classifier = nn.Identity()
@@ -207,6 +207,8 @@ class ImageBranch(nn.Module):
 
     def forward(self, x):
         if self.model_name == 'simple_cnn':
+            x = self.cnn(x)
+        elif self.model_name == 'resnet18':
             x = self.cnn(x)
         else:
             x = self.cnn.features(x)
