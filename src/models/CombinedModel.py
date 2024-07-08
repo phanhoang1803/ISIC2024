@@ -172,7 +172,7 @@ class CombinedModel(nn.Module):
             
             fused_features = torch.cat([image_features, metadata_features], dim=1)
     
-        print(fused_features.shape)
+        print("Fused features shape:", fused_features.shape)
         
         # Reshape for MultiheadAttention input (seq_len, batch_size, embed_dim)
         fused_features = fused_features.permute(1, 0, 2)
