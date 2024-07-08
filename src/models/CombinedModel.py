@@ -82,7 +82,9 @@ class ImageBranch(nn.Module):
         
         x = self.cnn(x)
         print("ImageBranch: x.shape", x.shape)
-        # x = nn.AdaptiveAvgPool1d(1)(x)
+        
+        tmp = nn.AdaptiveAvgPool1d((1, 1))(features)
+        print("ImageBranch: tmp.shape", tmp.shape)
         # x = torch.flatten(x, 1)
         # x = torch.nn.Dropout(p=0.5)(x)
         return x
