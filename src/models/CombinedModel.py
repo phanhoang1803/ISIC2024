@@ -174,10 +174,10 @@ class CombinedModel(nn.Module):
         fused_features = fused_features.unsqueeze(0) # Shape: (1, batch_size, features_dim)
         
         # Apply MultiheadAttention
-        attn_output, _ = self.multihead_attention(fused_features, fused_features, fused_features).squeeze(0)
+        attn_output, _ = self.multihead_attention(fused_features, fused_features, fused_features)
         
         # Pass feature maps through final layer
-        output = self.fc(attn_output.squeeze(1))
+        output = self.fc(attn_output.squeeze(0).squeeze(1))
         
         # Because we are using BCEWithLogitsLoss,  we don't need sigmoid here
         return output
