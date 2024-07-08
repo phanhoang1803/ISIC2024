@@ -108,7 +108,7 @@ class MetadataBranch(nn.Module):
         return x
 
 class CombinedModel(nn.Module):
-    def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[128], metadata_output_dim=32, num_heads=8, freeze=False):
+    def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[128], metadata_output_dim=32, use_attention=False, num_heads=8, freeze=False):
         """
         Initializes the CombinedAttentionModel with the given hyperparameters.
 
@@ -120,6 +120,7 @@ class CombinedModel(nn.Module):
         """
         super(CombinedModel, self).__init__()
         self.metadata_dim = metadata_dim
+        self.use_attention = use_attention
         
         # Initialize hyperparameters
         self.image_branch = ImageBranch(model_name=image_model_name, freeze=freeze)
@@ -134,7 +135,8 @@ class CombinedModel(nn.Module):
             # self.attention_fusion = AttentionalFeatureFusion(self.image_branch.output_dim, metadata_output_dim)
             combined_dim += metadata_output_dim
         
-        self.multihead_attention = nn.MultiheadAttention(embed_dim=self.image_branch.output_dim + metadata_output_dim,
+        if self.use_attention:
+            self.multihead_attention = nn.MultiheadAttention(embed_dim=self.image_branch.output_dim + metadata_output_dim,
                                                         num_heads=num_heads)
         
         # Initialize final layer
@@ -173,14 +175,19 @@ class CombinedModel(nn.Module):
             
             fused_features = torch.cat([image_features, metadata_features], dim=1) # Shape: (batch_size, self.image_branch.output_dim + self.metadata_branch.output_dim)
     
-        # MultiheadAttention input (seq_len, batch_size, embed_dim)
-        fused_features = fused_features.unsqueeze(0) # Shape: (1, batch_size, features_dim)
-        
-        # Apply MultiheadAttention
-        attn_output, _ = self.multihead_attention(fused_features, fused_features, fused_features)
-        
-        # Pass feature maps through final layer
-        output = self.fc(attn_output.squeeze(0).squeeze(1))
-        
+        if self.use_attention:
+                # MultiheadAttention input (seq_len, batch_size, embed_dim)
+            fused_features = fused_features.unsqueeze(0) # Shape: (1, batch_size, features_dim)
+            
+            # Apply MultiheadAttention
+            attn_output, _ = self.multihead_attention(fused_features, fused_features, fused_features)
+            
+            # Pass feature maps through final layer
+            attn_output = attn_output.squeeze(0).squeeze(1)
+            print(attn_output.shape)
+            output = self.fc(attn_output)
+        else:
+            output = self.fc(fused_features)
+
         # Because we are using BCEWithLogitsLoss,  we don't need sigmoid here
         return output
