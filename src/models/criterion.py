@@ -39,7 +39,7 @@ class PAUCLoss(nn.Module):
 
         return loss
 
-def criterion(outputs, targets):
+def criterion(outputs, targets, pos_weight=20.0):
     """
     Calculate the binary cross entropy loss between the model's outputs and the targets.
     
@@ -53,7 +53,7 @@ def criterion(outputs, targets):
     # Calculate the binary cross entropy loss using the BCELoss function from torch.nn.
     # The BCELoss function takes the model's outputs and the true targets as input.
     # return nn.BCELoss()(outputs, targets)
-    return nn.BCEWithLogitsLoss(pos_weight=torch.tensor([20.0]).to(outputs.device))(outputs, targets)
+    return nn.BCEWithLogitsLoss(pos_weight=torch.tensor([pos_weight]).to(outputs.device))(outputs, targets)
     # return PAUCLoss()(targets, outputs)
 
 def pAUC_score(outputs, targets, min_tpr: float=0.80):

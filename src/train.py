@@ -65,7 +65,7 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
         outputs = model(images, meta).squeeze()
         
         # Calculate loss
-        loss = criterion(outputs, targets)
+        loss = criterion(outputs, targets, pos_weight=CONFIG['pos_weight'])
         loss = loss / CONFIG['n_accumulate']
            
         # Backward pass and optimization
@@ -109,7 +109,7 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
     return epoch_loss, epoch_pauc
 
 @torch.inference_mode()
-def valid_one_epoch(model, dataloader, use_meta, device, epoch):
+def valid_one_epoch(model, dataloader, use_meta, device, epoch, CONFIG):
     """
     Validates the model for one epoch.
 
@@ -147,7 +147,7 @@ def valid_one_epoch(model, dataloader, use_meta, device, epoch):
 
         # Perform forward pass
         outputs = model(images, meta).squeeze()
-        loss = criterion(outputs, targets)
+        loss = criterion(outputs, targets, pos_weight=CONFIG['pos_weight'])
         
         # Collect targets and outputs
         all_targets.append(targets.detach().cpu().numpy())
@@ -229,7 +229,8 @@ def run_training(model, train_loader, valid_loader, use_meta, optimizer, schedul
                                                          dataloader=valid_loader, 
                                                          use_meta=use_meta,
                                                          device=device,
-                                                         epoch=epoch)
+                                                         epoch=epoch,
+                                                         CONFIG=CONFIG)
 
         # Store training and validation metrics in history
         history['Train Loss'].append(train_epoch_loss)
