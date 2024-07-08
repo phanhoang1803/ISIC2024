@@ -71,7 +71,13 @@ def pAUC_score(outputs, targets, min_tpr: float=0.80):
     v_gt = abs(np.asarray(targets) - 1)
     v_pred = np.array([1.0 - x for x in outputs])
     max_fpr = abs(1 - min_tpr)
-    partial_auc_scaled = roc_auc_score(v_gt, v_pred, max_fpr=max_fpr)
+    try:
+        partial_auc_scaled = roc_auc_score(v_gt, v_pred, max_fpr=max_fpr)
+    except ValueError:
+        print("ValueError: ROC AUC score is not defined for empty label set.")
+        print("v_pred:", v_pred)
+        v_pred = np.nan_to_num(v_pred)
+        partial_auc_scaled = roc_auc_score(v_gt, v_pred, max_fpr=max_fpr)
     
     # Change scale from [0.5, 1.0] to [0.5 * max_fpr**2, max_fpr]
     partial_auc = 0.5 * max_fpr**2 + (max_fpr - 0.5 * max_fpr**2) / (1.0 - 0.5) * (partial_auc_scaled - 0.5)
