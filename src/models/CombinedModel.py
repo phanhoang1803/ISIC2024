@@ -106,7 +106,7 @@ class ImageBranch(nn.Module):
 
     def forward(self, x):
         x = self.cnn(x)
-        x = nn.AdaptiveAvgPool2d((1, 1))(x)
+        x = nn.AdaptiveAvgPool1d((1, 1))(x)
         x = torch.flatten(x, 1)
         # x = torch.nn.Dropout(p=0.5)(x)
         return x
