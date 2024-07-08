@@ -52,38 +52,11 @@ class ImageBranch(nn.Module):
             model = model_architectures[self.model_name](pretrained=self.pretrained)
             model.classifier = nn.Identity()
             model.avgpool = nn.Identity()
-        elif self.model_name == 'simple_cnn':
-            model = self.__create_simple_cnn_model()
         else:
             raise ValueError(f"Unsupported model: {self.model_name}\n Supported models: resnet18, vgg16, efficientnet_b 0 to 7")
 
         return model
 
-    def __create_simple_cnn_model(self):
-        model = nn.Sequential(
-            nn.Conv2d(3, 64, kernel_size=5, stride=1, padding=1),
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=3, stride=2, padding=0),
-            
-            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(128),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=3, stride=2, padding=0),
-            
-            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=3, stride=2, padding=0),
-            
-            nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(512),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=3, stride=2, padding=0),
-        )
-        
-        return model
-    
     def _get_output_dim(self):
         lookup = {
             'resnet18': 512,
@@ -95,8 +68,7 @@ class ImageBranch(nn.Module):
             'efficientnet_b4': 1792,
             'efficientnet_b5': 2048,
             'efficientnet_b6': 2304,
-            'efficientnet_b7': 2560,
-            'simple_cnn': 512
+            'efficientnet_b7': 2560
         }
         dim = lookup.get(self.model_name, None)
         if dim is None:
@@ -106,7 +78,8 @@ class ImageBranch(nn.Module):
 
     def forward(self, x):
         x = self.cnn(x)
-        x = nn.AdaptiveAvgPool1d((1, 1))(x)
+        x = nn.AdaptiveAvgPool1d(1)(x)
+        print(x.shape)
         x = torch.flatten(x, 1)
         # x = torch.nn.Dropout(p=0.5)(x)
         return x
