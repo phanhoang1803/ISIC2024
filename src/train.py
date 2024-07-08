@@ -313,16 +313,17 @@ def prepare_loaders(df: pd.DataFrame, fold: int, meta_feature_columns: list, dat
         tuple: A tuple containing the data loaders for training and validation datasets.
     """
     # Handle NaNs if present
-    df.fillna(0, inplace=True)  # Replace NaNs with 0 or another appropriate value
+    # df.fillna(0, inplace=True)  # Replace NaNs with 0 or another appropriate value
+    df.infer_objects(copy=False)
     
     # Split the dataframe into training and validation datasets based on the fold
     df_train = df[df.kfold != fold].reset_index(drop=True)
     df_valid = df[df.kfold == fold].reset_index(drop=True)
 
     print("[INFO] Train set: ")
-    df_train.describe()
+    df_train[meta_feature_columns].describe()
     print("[INFO] Valid set: ")
-    df_valid.describe()
+    df_valid[meta_feature_columns].describe()
     
     # Create the datasets
     train_dataset = TBP_Dataset(df_train, meta_feature_columns=meta_feature_columns, transform=data_transforms["train"])
