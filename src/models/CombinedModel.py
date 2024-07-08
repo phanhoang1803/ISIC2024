@@ -243,8 +243,8 @@ class MetadataAttention(nn.Module):
         k = self.key(x).view(batch_size, seq_length, self.num_heads, self.head_dim)
         v = self.value(x).view(batch_size, seq_length, self.num_heads, self.head_dim)
         
-        # Move scale to GPU
         self.scale.to(q.device)
+        print(f'q device: {q.device}, k device: {k.device}, scale device: {self.scale.device}')
         
         energy = torch.einsum("bqhd,bkhd->bhqk", [q, k]) / self.scale
         attention = torch.softmax(energy, dim=-1)
