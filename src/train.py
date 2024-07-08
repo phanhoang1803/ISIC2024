@@ -403,8 +403,6 @@ def main():
                               metadata_dim=len(meta_feature_columns) if CONFIG['use_meta'] else 0, 
                               hidden_dims=[128, 64], 
                               metadata_output_dim=32,
-                              use_attention=args.use_attention,
-                              attention_type=args.image_attention_type,
                               num_heads=args.num_heads)
     
     model.to(CONFIG['device'])
