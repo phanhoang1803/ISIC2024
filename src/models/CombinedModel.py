@@ -23,10 +23,11 @@ class Swish_Module(nn.Module):
         return Swish.apply(x)
 
 class ImageBranch(nn.Module):
-    def __init__(self, model_name='efficientnet_b0', pretrained=True):
+    def __init__(self, model_name='efficientnet_b0', pretrained=True, freeze=False):
         super(ImageBranch, self).__init__()
         self.model_name = model_name
         self.pretrained = pretrained
+        self.freeze = freeze
         self.cnn = self._create_cnn_model()
         self.output_dim = self._get_output_dim()
 
@@ -45,6 +46,10 @@ class ImageBranch(nn.Module):
         }
 
         model = model_architectures[self.model_name](pretrained=self.pretrained)
+
+        if self.freeze:
+            for param in model.parameters():
+                param.requires_grad = False
 
         if self.model_name in ['resnet18', 'vgg16']:
             model.fc = nn.Identity()
@@ -103,7 +108,7 @@ class MetadataBranch(nn.Module):
         return x
 
 class CombinedModel(nn.Module):
-    def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[128], metadata_output_dim=32, num_heads=8):
+    def __init__(self, image_model_name, metadata_dim=0, hidden_dims=[128], metadata_output_dim=32, num_heads=8, freeze=False):
         """
         Initializes the CombinedAttentionModel with the given hyperparameters.
 
@@ -117,7 +122,7 @@ class CombinedModel(nn.Module):
         self.metadata_dim = metadata_dim
         
         # Initialize hyperparameters
-        self.image_branch = ImageBranch(model_name=image_model_name)
+        self.image_branch = ImageBranch(model_name=image_model_name, freeze=freeze)
         combined_dim = self.image_branch.output_dim
         
         # Initialize metadata branch if metadata_dim > 0

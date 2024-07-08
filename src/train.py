@@ -403,7 +403,8 @@ def main():
                               metadata_dim=len(meta_feature_columns) if CONFIG['use_meta'] else 0, 
                               hidden_dims=[128, 64], 
                               metadata_output_dim=32,
-                              num_heads=args.num_heads)
+                              num_heads=args.num_heads,
+                              freeze=args.freeze)
     
     model.to(CONFIG['device'])
 

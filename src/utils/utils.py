@@ -33,6 +33,8 @@ def parse_arguments():
     parser.add_argument('--use_attention', action='store_true', help='Use attention layers or not')    
     parser.add_argument('--num_heads', type=int, default=8, help='Number of attention heads')
 
+    parser.add_argument('--freeze', action='store_true', help='Freeze the image model')   
+
     ### Additional data
     parser.add_argument('--extra_data_dirs', type=str, nargs='*', help='List of additional directories containing training data')
     parser.add_argument('--extra_neg_ratio', type=int, default=0, help='0: no negative samples, -1: load all data, >0: the ratio of negative samples to positive samples as specified')
