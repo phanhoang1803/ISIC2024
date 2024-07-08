@@ -141,7 +141,8 @@ class CombinedModel(nn.Module):
         
         # Initialize final layer
         self.fc = nn.Sequential(
-            nn.Dropout(p=0.5),
+            nn.Dropout(p=0.7),
+            
             nn.Linear(combined_dim, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(inplace=True),
@@ -184,7 +185,6 @@ class CombinedModel(nn.Module):
             
             # Pass feature maps through final layer
             attn_output = attn_output.squeeze(0).squeeze(1)
-            print(attn_output.shape)
             output = self.fc(attn_output)
         else:
             output = self.fc(fused_features)
