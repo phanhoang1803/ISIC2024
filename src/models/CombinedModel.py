@@ -217,7 +217,7 @@ class ImageBranch(nn.Module):
             x = self.attention(x)
         x = nn.AdaptiveAvgPool2d((1, 1))(x)
         x = torch.flatten(x, 1)
-        x = torch.nn.Dropout(p=0.6)(x)
+        x = torch.nn.Dropout(p=0.7)(x)
         return x
 
 
@@ -234,7 +234,7 @@ class MetadataAttention(nn.Module):
         self.value = nn.Linear(dim, dim)
         
         self.fc_out = nn.Linear(dim, dim)
-        self.scale = torch.sqrt(torch.FloatTensor([self.head_dim]))
+        self.scale = torch.sqrt(torch.tensor([self.head_dim], dtype=torch.float32))
 
     def forward(self, x):
         batch_size, seq_length, dim = x.size()
