@@ -118,6 +118,7 @@ class CombinedModel(nn.Module):
             metadata_output_dim (int, optional): The output dimension for the metadata branch. Defaults to 128.
         """
         super(CombinedModel, self).__init__()
+        self.metadata_dim = metadata_dim
         
         # Initialize hyperparameters
         self.image_branch = ImageBranch(model_name=image_model_name)
