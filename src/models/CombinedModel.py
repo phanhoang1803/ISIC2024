@@ -77,16 +77,7 @@ class ImageBranch(nn.Module):
         return dim
 
     def forward(self, x):
-        features = self.cnn.features(x)
-        print("ImageBranch: features.shape", features.shape)
-        
-        x = self.cnn(x)
-        print("ImageBranch: x.shape", x.shape)
-        
-        tmp = nn.AdaptiveAvgPool2d((1, 1))(features)
-        print("ImageBranch: tmp.shape", tmp.shape)
-        # x = torch.flatten(x, 1)
-        # x = torch.nn.Dropout(p=0.5)(x)
+        x = self.cnn(x) # Shape: (batch_size, self.output_dim)
         return x
 
 class MetadataBranch(nn.Module):
@@ -175,7 +166,7 @@ class CombinedModel(nn.Module):
         if self.metadata_dim > 0:
             metadata_features  = self.metadata_branch(metadata)
             
-            fused_features = torch.cat([image_features, metadata_features], dim=1)
+            fused_features = torch.cat([image_features, metadata_features], dim=1) # Shape: (batch_size, self.image_branch.output_dim + self.metadata_branch.output_dim)
     
         print("Fused features shape:", fused_features.shape)
         
