@@ -9,10 +9,12 @@ class SingleMLP(nn.Module):
         super(SingleMLP, self).__init__()
         self.fc = nn.Linear(input_dim, output_dim)
         self.relu6 = nn.ReLU6()
+        self.dropout = nn.Dropout(p=0.3)
         
     def forward(self, x):
         x = self.fc(x)
         x = self.relu6(x)
+        x = self.dropout(x)
         return x
 
 class SubsequentMLP(nn.Module):
@@ -21,8 +23,10 @@ class SubsequentMLP(nn.Module):
         
         self.mlps = nn.ModuleList()
         self.mlps.append(SingleMLP(input_dim, hidden_dims[0]))
+        
         for i in range(len(hidden_dims) - 1):
             self.mlps.append(SingleMLP(hidden_dims[i], hidden_dims[i + 1]))
+            
         self.mlps.append(SingleMLP(hidden_dims[-1], output_dim))
     
     def forward(self, x):
@@ -41,6 +45,8 @@ class ImageEncoder(nn.Module):
         self.pretrained_output_dim = self._get_output_dim()
         
         self.image_mlp = SubsequentMLP(self.pretrained_output_dim, hidden_dims, embed_dim)
+        
+        self.ln = nn.LayerNorm(embed_dim)
         
     def _create_image_encoder(self):
         networks = {
@@ -105,16 +111,17 @@ class ImageEncoder(nn.Module):
     def forward(self, x):
         x = self.pretrained_image_encoder(x)
         x = self.image_mlp(x)
-        
+        x = self.ln(x)
         return x
             
 class MetadataEncoder(nn.Module):
     def __init__(self, meta_dim: int, hidden_dims: list, meta_embed_dim: int):
         super(MetadataEncoder, self).__init__()
         self.meta_mlp = SubsequentMLP(meta_dim, hidden_dims, meta_embed_dim)
-
+        self.ln = nn.LayerNorm(meta_embed_dim)
     def forward(self, x):
         x = self.meta_mlp(x)
+        x = self.ln(x)
         return x
 
 
@@ -145,10 +152,17 @@ class MultimodalClassifier(nn.Module):
         self.meta_encoder = MetadataEncoder(meta_dim, meta_hidden_dims, embed_dim)
         self.decoder = Decoder(embed_dim)
         self.fc = nn.Sequential(
+            nn.LayerNorm(embed_dim * 2),
             nn.Linear(embed_dim * 2, 64),
             nn.ReLU6(),
+            nn.Dropout(p=0.5),
+
+            nn.LayerNorm(64),
             nn.Linear(64, 32),
             nn.ReLU6(),
+            nn.Dropout(p=0.5),
+
+            # nn.LayerNorm(32),
             nn.Linear(32, 1),    
         )
         
