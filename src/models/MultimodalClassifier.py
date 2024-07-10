@@ -48,14 +48,30 @@ class ImageEncoder(nn.Module):
             "vit_b": torchvision.models.vit_b_32,
             "densenet121": torchvision.models.densenet121,
             "swin_b": torchvision.models.swin_b,
+            'resnet18': torchvision.models.resnet18,
+            'resnet50': torchvision.models.resnet50,
+            'vgg16': torchvision.models.vgg16,
+            'efficientnet_b0': torchvision.models.efficientnet_b0,
+            'efficientnet_b1': torchvision.models.efficientnet_b1,
+            'efficientnet_b2': torchvision.models.efficientnet_b2,
+            'efficientnet_b3': torchvision.models.efficientnet_b3,
+            'efficientnet_b4': torchvision.models.efficientnet_b4,
+            'efficientnet_b5': torchvision.models.efficientnet_b5,
+            'efficientnet_b6': torchvision.models.efficientnet_b6,
+            'efficientnet_b7': torchvision.models.efficientnet_b7
         }
         
         # model = torchvision.models.vit_l_32(pretrained=self.pretrained)
         if self.model_name == "nest_base":
             model = timm.create_model("nest_base", pretrained=self.pretrained),
-        else:
+        elif self.model_name.startswith("vit"):
             model = networks[self.model_name](pretrained=self.pretrained)
             model.heads = nn.Identity()
+        elif self.model_name.startswith("efficientnet"):
+            model = networks[self.model_name](pretrained=self.pretrained)
+            model.classifier = nn.Identity()
+        else:
+            model = networks[self.model_name](pretrained=self.pretrained)
                     
         return model
     
