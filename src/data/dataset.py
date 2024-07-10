@@ -74,12 +74,12 @@ class TBP_Dataset(Dataset):
         self.meta_feature_columns = meta_feature_columns
         self.transform = transform
     
-        if self.meta_feature_columns is not None:
-            self.scaler = MinMaxScaler()
-            print(self.df[self.meta_feature_columns].dtypes)
-            df[meta_feature_columns] = df[meta_feature_columns].replace([np.inf, -np.inf], np.nan)
-            df[meta_feature_columns] = df[meta_feature_columns].fillna(0)
-            self.df[self.meta_feature_columns] = self.scaler.fit_transform(self.df[self.meta_feature_columns].values)
+        # if self.meta_feature_columns is not None:
+        #     self.scaler = MinMaxScaler()
+        #     print(self.df[self.meta_feature_columns].dtypes)
+        #     df[meta_feature_columns] = df[meta_feature_columns].replace([np.inf, -np.inf], np.nan)
+        #     df[meta_feature_columns] = df[meta_feature_columns].fillna(0)
+        #     self.df[self.meta_feature_columns] = self.scaler.fit_transform(self.df[self.meta_feature_columns].values)
     
     def __len__(self):
         return self.df.shape[0]

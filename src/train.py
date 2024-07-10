@@ -18,12 +18,16 @@ from models.EfficientNet_FPN_SE import EfficientNet_FPN_SE
 from models.ensemble_model import EnsembleModel
 from models.CombinedAttentionModel import CombinedAttentionModel
 from models.CombinedModel import CombinedModel
+from models.MultimodalClassifier import MultimodalClassifier
+
 # from utils.config import CONFIG
 from utils.seed import seed_torch
 from utils.utils import make_dirs, save_model
 from models.criterion import valid_score, criterion, pAUC_score
 from utils.utils import parse_arguments
 from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold
+
+
 
 def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, epoch, CONFIG):
     """
@@ -411,6 +415,14 @@ def main():
                               use_attention=args.use_attention,
                               num_heads=args.num_heads,
                               freeze=args.freeze)
+    elif CONFIG['architecture'] == 'MultimodalClassifier':
+        model = MultimodalClassifier(meta_dim=len(meta_feature_columns) if CONFIG['use_meta'] else 0,
+                                     img_hidden_dims=[512, 256],
+                                     meta_hidden_dims=[256, 128],
+                                     embed_dim=64,
+                                     num_classes=1,
+                                     model_name=args.model_name,
+                                     pretrained=True)
     
     model.to(CONFIG['device'])
 
