@@ -52,7 +52,7 @@ class ImageBranch(nn.Module):
             for param in model.parameters():
                 param.requires_grad = False
 
-        if self.model_name in ['resnet18', 'vgg16']:
+        if self.model_name in ['resnet18', 'resnet50', 'vgg16']:
             model.fc = nn.Identity()
             model.avgpool = nn.Identity()
         elif self.model_name.startswith('efficientnet_b'):
