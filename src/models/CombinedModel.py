@@ -141,8 +141,6 @@ class CombinedModel(nn.Module):
             self.multihead_attention = nn.MultiheadAttention(embed_dim=self.image_branch.output_dim + metadata_output_dim,
                                                         num_heads=num_heads)
         
-        print("Combined dim: ", combined_dim)
-        
         # Initialize final layer
         self.fc = nn.Sequential(
             nn.Dropout(p=0.7),
@@ -179,7 +177,6 @@ class CombinedModel(nn.Module):
             metadata_features  = self.metadata_branch(metadata)
             
             fused_features = torch.cat([image_features, metadata_features], dim=1) # Shape: (batch_size, self.image_branch.output_dim + self.metadata_branch.output_dim)
-            print("Fused features:", fused_features.shape)
     
         if self.use_attention:
                 # MultiheadAttention input (seq_len, batch_size, embed_dim)
