@@ -35,7 +35,7 @@ class ImageEncoder(nn.Module):
         self.model_name = model_name
         self.pretrained = pretrained
         
-        self.pretrained_image_encoder = self._create_image_encoder(model_name)
+        self.pretrained_image_encoder = self._create_image_encoder()
         self.pretrained_output_dim = self._get_output_dim()
         
         self.image_mlp = SubsequentMLP(self.pretrained_output_dim, hidden_dims, embed_dim)
