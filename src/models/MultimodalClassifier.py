@@ -32,6 +32,8 @@ class SubsequentMLP(nn.Module):
         
 class ImageEncoder(nn.Module):
     def __init__(self, hidden_dims: list, embed_dim: int, model_name: str="vit_l", pretrained: bool=True):
+        super(ImageEncoder, self).__init__()
+        
         self.model_name = model_name
         self.pretrained = pretrained
         
@@ -51,13 +53,8 @@ class ImageEncoder(nn.Module):
         # model = torchvision.models.vit_l_32(pretrained=self.pretrained)
         if self.model_name == "nest_base":
             model = timm.create_model("nest_base", pretrained=self.pretrained),
-
-            # model.head = nn.Identity()
-            
         else:
             model = networks[self.model_name](pretrained=self.pretrained)
-            model.heads = nn.Identity()
-            # model.head = nn.Identity()
             
         print("[INFO] Image encoder architecture: {}".format(model.__class__.__name__))        
             
