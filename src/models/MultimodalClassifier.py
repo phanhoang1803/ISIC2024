@@ -55,6 +55,7 @@ class ImageEncoder(nn.Module):
             model = timm.create_model("nest_base", pretrained=self.pretrained),
         else:
             model = networks[self.model_name](pretrained=self.pretrained)
+            model.head = nn.Identity()
                     
         return model
     
