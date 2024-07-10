@@ -114,8 +114,8 @@ class Decoder(nn.Module):
     
     def forward(self, img_features, meta_features):
         # Multihead Attention
-        img_attn_output, _ = self.multihead_attn_img(img_features, meta_features, meta_features)
-        metadata_attn_output, _ = self.multihead_attn_meta(meta_features, img_features, img_features)
+        img_attn_output, _ = self.multihead_attn_img(meta_features, img_features, img_features) # Q, K, V
+        metadata_attn_output, _ = self.multihead_attn_meta(img_features, meta_features, meta_features) # Q, K, V
         
         # Residual connection
         img_attn_fused = img_attn_output + img_features
