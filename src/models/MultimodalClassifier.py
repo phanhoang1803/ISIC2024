@@ -81,7 +81,18 @@ class ImageEncoder(nn.Module):
             "vit_b": 768,
             "densenet121": 1024,
             "swin_b": 1536,
-            "nest_base": 1024
+            "nest_base": 1024,
+            "resnet18": 512,
+            "resnet50": 2048,
+            "vgg16": 4096,
+            "efficientnet_b0": 1280,
+            "efficientnet_b1": 1280,
+            "efficientnet_b2": 1280,
+            "efficientnet_b3": 1280,
+            "efficientnet_b4": 1280,
+            "efficientnet_b5": 1280,
+            "efficientnet_b6": 1280,
+            "efficientnet_b7": 1280
         }
         
         dim = lookup.get(self.model_name, None)
