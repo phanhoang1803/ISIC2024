@@ -216,7 +216,7 @@ def run_training(model, train_loader, valid_loader, use_meta, optimizer, schedul
     current_patience = 0  # Initialize current patience counter
 
     print('[INFO] Start training...')
-    print("[INFO] Model architecture: {}".format(model.__class__))        
+    print("[INFO] Model architecture: {}".format(model))        
     print('[INFO] Use metadata: {}'.format(use_meta))
 
     # Train the model for the specified number of epochs
