@@ -55,6 +55,7 @@ class ImageEncoder(nn.Module):
             
         else:
             model = networks[model_name](pretrained=self.pretrained)
+            model.heads = nn.Identity()
             # model.head = nn.Identity()
             
         print("[INFO] Image encoder architecture: {}".format(model.__class__.__name__))        
