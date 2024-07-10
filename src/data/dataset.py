@@ -1,5 +1,6 @@
 import cv2
 import random
+from sklearn.preprocessing import MinMaxScaler
 import torch
 from torch.utils.data import Dataset
 import numpy as np
@@ -72,6 +73,10 @@ class TBP_Dataset(Dataset):
         self.df = df.reset_index(drop=True)
         self.meta_feature_columns = meta_feature_columns
         self.transform = transform
+    
+        if self.meta_feature_columns is not None:
+            self.scaler = MinMaxScaler()
+            self.df[self.meta_feature_columns] = self.scaler.fit_transform(self.df[self.meta_feature_columns].values)
     
     def __len__(self):
         return self.df.shape[0]
