@@ -70,14 +70,15 @@ class ImageEncoder(nn.Module):
         # model = torchvision.models.vit_l_32(pretrained=self.pretrained)
         if self.model_name == "nest_base":
             model = timm.create_model("nest_base", pretrained=self.pretrained),
-        elif self.model_name.startswith("vit"):
-            model = networks[self.model_name](pretrained=self.pretrained)
-            model.heads = nn.Identity()
-        elif self.model_name.startswith("efficientnet"):
-            model = networks[self.model_name](pretrained=self.pretrained)
-            model.classifier = nn.Identity()
         else:
             model = networks[self.model_name](pretrained=self.pretrained)
+                    
+        if self.model_name in ['resnet18', 'resnet50', 'vgg16']:
+            model.fc = nn.Identity()
+        elif self.model_name.startswith("vit"):
+            model.heads = nn.Identity()
+        elif self.model_name.startswith("efficientnet"):
+            model.classifier = nn.Identity()                    
                     
         return model
     
