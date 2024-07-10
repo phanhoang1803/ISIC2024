@@ -34,12 +34,13 @@ class ImageEncoder(nn.Module):
     def __init__(self, hidden_dims: list, embed_dim: int, model_name: str="vit_l", pretrained: bool=True):
         self.model_name = model_name
         self.pretrained = pretrained
+        
         self.pretrained_image_encoder = self._create_image_encoder(model_name)
         self.pretrained_output_dim = self._get_output_dim()
         
         self.image_mlp = SubsequentMLP(self.pretrained_output_dim, hidden_dims, embed_dim)
         
-    def _create_image_encoder(self, model_name):
+    def _create_image_encoder(self):
         networks = {
             "vit_l": torchvision.models.vit_l_32,
             "vit_b": torchvision.models.vit_b_32,
@@ -48,18 +49,17 @@ class ImageEncoder(nn.Module):
         }
         
         # model = torchvision.models.vit_l_32(pretrained=self.pretrained)
-        if model_name == "nest_base":
+        if self.model_name == "nest_base":
             model = timm.create_model("nest_base", pretrained=self.pretrained),
 
             # model.head = nn.Identity()
             
         else:
-            model = networks[model_name](pretrained=self.pretrained)
+            model = networks[self.model_name](pretrained=self.pretrained)
             model.heads = nn.Identity()
             # model.head = nn.Identity()
             
         print("[INFO] Image encoder architecture: {}".format(model.__class__.__name__))        
-            
             
         return model
     
