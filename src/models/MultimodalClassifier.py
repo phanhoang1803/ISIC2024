@@ -55,9 +55,7 @@ class ImageEncoder(nn.Module):
             model = timm.create_model("nest_base", pretrained=self.pretrained),
         else:
             model = networks[self.model_name](pretrained=self.pretrained)
-            
-        print("[INFO] Image encoder architecture: {}".format(model.__class__.__name__))        
-            
+                    
         return model
     
     def _get_output_dim(self):
