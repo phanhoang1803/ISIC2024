@@ -121,7 +121,7 @@ class MultimodalClassifier(nn.Module):
             nn.ReLU6(),
             nn.Linear(64, 32),
             nn.ReLU6(),
-            nn.Linear(32, num_classes),    
+            nn.Linear(32, 1),    
         )
         
         
@@ -132,4 +132,4 @@ class MultimodalClassifier(nn.Module):
         fused_features = self.decoder(images_features, meta_features)
         output = self.fc(fused_features)
         
-        return torch.softmax(output, dim=-1)
+        return torch.nn.Sigmoid()(output)
