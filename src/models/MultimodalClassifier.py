@@ -45,12 +45,12 @@ class ImageEncoder(nn.Module):
             "vit_b": torchvision.models.vit_b_32,
             "densenet121": torchvision.models.densenet121,
             "swin_b": torchvision.models.swin_b,
-            "nest_base": timm.create_model("nest_base", pretrained=self.pretrained),
         }
         
         # model = torchvision.models.vit_l_32(pretrained=self.pretrained)
         if model_name == "nest_base":
-            model = networks[model_name]
+            model = timm.create_model("nest_base", pretrained=self.pretrained),
+
             # model.head = nn.Identity()
             
         else:
