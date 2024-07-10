@@ -164,7 +164,7 @@ class MultimodalClassifier(nn.Module):
             nn.Dropout(p=0.5),
 
             # nn.LayerNorm(32),
-            nn.Linear(32, 1),    
+            nn.Linear(32, num_classes),    
         )
         
         
@@ -173,6 +173,7 @@ class MultimodalClassifier(nn.Module):
         meta_features = self.meta_encoder(meta)
         
         fused_features = self.decoder(images_features, meta_features)
+        
         output = self.fc(fused_features)
         
-        return torch.nn.Sigmoid()(output)
+        return output
