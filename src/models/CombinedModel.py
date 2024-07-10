@@ -34,6 +34,7 @@ class ImageBranch(nn.Module):
     def _create_cnn_model(self):
         model_architectures = {
             'resnet18': torchvision.models.resnet18,
+            'resnet50': torchvision.models.resnet50,
             'vgg16': torchvision.models.vgg16,
             'efficientnet_b0': torchvision.models.efficientnet_b0,
             'efficientnet_b1': torchvision.models.efficientnet_b1,
@@ -65,6 +66,7 @@ class ImageBranch(nn.Module):
     def _get_output_dim(self):
         lookup = {
             'resnet18': 512,
+            'resnet50': 2048,
             'vgg16': 4096,
             'efficientnet_b0': 1280,
             'efficientnet_b1': 1280,
