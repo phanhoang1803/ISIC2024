@@ -83,7 +83,7 @@ def criterion(outputs, targets, pos_weight=20.0, loss='bce_with_logits'):
     elif loss == 'pauc':
         return PAUCLoss()(targets, outputs)
     elif loss == 'mse':
-        return nn.MSELoss()(outputs, targets)
+        return nn.MSELoss()(torch.nn.Sigmoid()(outputs), targets)
     else:
         raise ValueError(f"Invalid loss function: {loss}")
 
