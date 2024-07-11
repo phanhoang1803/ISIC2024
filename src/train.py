@@ -20,6 +20,7 @@ from models.CombinedAttentionModel import CombinedAttentionModel
 from models.CombinedModel import CombinedModel
 from models.MultimodalClassifier import MultimodalClassifier
 
+
 # from utils.config import CONFIG
 from utils.seed import seed_torch
 from utils.utils import make_dirs, save_model
@@ -79,7 +80,8 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
         # Step the optimizer and scheduler
         if (step + 1) % CONFIG['n_accumulate'] == 0:
             # Clip gradients
-            torch.nn.utils.clip_grad_norm_(model.parameters(), CONFIG['max_grad_norm'])
+            if CONFIG['max_grad_norm'] is not None:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), CONFIG['max_grad_norm'])
             
             optimizer.step()
             optimizer.zero_grad()
@@ -418,9 +420,9 @@ def main():
                               freeze=args.freeze)
     elif CONFIG['architecture'] == 'MultimodalClassifier':
         model = MultimodalClassifier(meta_dim=len(meta_feature_columns) if CONFIG['use_meta'] else 0,
-                                     img_hidden_dims=[512, 256],
-                                     meta_hidden_dims=[256, 128],
-                                     embed_dim=64,
+                                     img_hidden_dims=CONFIG['img_hidden_dims'],
+                                     meta_hidden_dims=CONFIG['meta_hidden_dims'],
+                                     embed_dim=CONFIG['embed_dim'],
                                      num_classes=1,
                                      model_name=args.model_name,
                                      pretrained=True)
@@ -432,9 +434,15 @@ def main():
     train_loader, valid_loader = prepare_loaders(df, fold=CONFIG["fold"], meta_feature_columns=meta_feature_columns, data_transforms=transforms, CONFIG=CONFIG)
     
     # Initialize optimizer and scheduler
-    optimizer = optim.Adam(model.parameters(), 
-                           lr=CONFIG['learning_rate'], 
-                           weight_decay=CONFIG['weight_decay'])
+    if CONFIG['optimizer'] == 'Adam':
+        optimizer = optim.Adam(model.parameters(), lr=CONFIG['learning_rate'], weight_decay=CONFIG['weight_decay'])
+    elif CONFIG['optimizer'] == 'AdamW':
+        optimizer = optim.AdamW(model.parameters(), lr=CONFIG['learning_rate'], weight_decay=CONFIG['weight_decay'])
+    elif CONFIG['optimizer'] == 'RAdam':
+        optimizer = optim.RAdam(model.parameters(), lr=CONFIG['learning_rate'], weight_decay=CONFIG['weight_decay'])
+    elif CONFIG['optimizer'] == 'SGD':
+        optimizer = optim.SGD(model.parameters(), lr=CONFIG['learning_rate'], weight_decay=CONFIG['weight_decay'])
+    
     scheduler = fetch_scheduler(optimizer, CONFIG)
 
     # Run training
