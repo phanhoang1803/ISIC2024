@@ -36,8 +36,8 @@ def parse_arguments():
     parser.add_argument('--use_attention', action='store_true', help='Use attention layers or not')    
     parser.add_argument('--num_heads', type=int, default=8, help='Number of attention heads')
     parser.add_argument('--freeze', action='store_true', help='Freeze the image model')   
-    parser.add_argument('--img_hidden_dims', type=list, default=[512, 256], help='Image model hidden dimensions')
-    parser.add_argument('--meta_hidden_dims', type=list, default=[256, 128], help='Meta model hidden dimensions')
+    parser.add_argument('--img_hidden_dims', type=int, nargs='*', default=[512, 256], help='Image model hidden dimensions')
+    parser.add_argument('--meta_hidden_dims', type=int, nargs='*', default=[256, 128], help='Metadata model hidden dimensions')
     parser.add_argument('--embed_dim', type=int, default=64, help='Embedding dimension')
     
     ### Training parameters
