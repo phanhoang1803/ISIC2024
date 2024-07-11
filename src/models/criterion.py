@@ -74,7 +74,7 @@ def criterion(outputs, targets, pos_weight=20.0, loss='bce_with_logits'):
     if loss == 'bce':
         return nn.BCELoss()(outputs, targets)
     elif loss == 'bce_with_logits':
-        if pos_weight > 0:
+        if pos_weight is not None:
             return nn.BCEWithLogitsLoss(pos_weight=torch.tensor([pos_weight]).to(outputs.device))(outputs, targets)
         else:
             return nn.BCEWithLogitsLoss()(outputs, targets)

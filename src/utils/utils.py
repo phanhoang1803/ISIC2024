@@ -35,7 +35,7 @@ def parse_arguments():
 
     parser.add_argument('--freeze', action='store_true', help='Freeze the image model')   
     
-    parser.add_argument('--pos_weight', type=float, default=1.0, help='Positive weight')
+    parser.add_argument('--pos_weight', type=float, default=None, help='Positive weight')
     parser.add_argument('--max_grad_norm', type=float, default=1.0, help='Max gradient norm')
     parser.add_argument('--loss', type=str, default='bce_with_logits', help='Loss function', choices=['bce', 'bce_with_logits', 'focal', 'pauc'])
     
