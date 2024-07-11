@@ -4,7 +4,7 @@ from sklearn.preprocessing import MinMaxScaler
 import torch
 from torch.utils.data import Dataset
 import numpy as np
-
+import pandas as pd
 
 class ISICDataset_for_Train(Dataset):
     def __init__(self, df, transforms=None):
@@ -69,17 +69,21 @@ class ISICDataset(Dataset):
 
 
 class TBP_Dataset(Dataset):
-    def __init__(self, df, meta_feature_columns, transform=None):
+    def __init__(self, df, meta_feature_columns, transform=None, to_prob=False):
         self.df = df.reset_index(drop=True)
         self.meta_feature_columns = meta_feature_columns
         self.transform = transform
+
+        if to_prob:
+            df_positive = df[df["target"] == 1].reset_index()
+            df_negative = df[df["target"] == 0].reset_index()
+
+            # 0 -> (100 - confidence) * 0.5 / 100
+            # 1 -> confidence * 0.5 / 100 + 0.5
+            df_positive["target"] = df_positive["tbp_lv_dnn_lesion_confidence"] * 0.5 / 100 + 0.5
+            df_negative["target"] = (100 - df_negative["tbp_lv_dnn_lesion_confidence"]) * 0.5 / 100
     
-        # if self.meta_feature_columns is not None:
-        #     self.scaler = MinMaxScaler()
-        #     print(self.df[self.meta_feature_columns].dtypes)
-        #     df[meta_feature_columns] = df[meta_feature_columns].replace([np.inf, -np.inf], np.nan)
-        #     df[meta_feature_columns] = df[meta_feature_columns].fillna(0)
-        #     self.df[self.meta_feature_columns] = self.scaler.fit_transform(self.df[self.meta_feature_columns].values)
+            df = pd.concat([df_positive, df_negative]).reset_index()
     
     def __len__(self):
         return self.df.shape[0]
@@ -93,7 +97,6 @@ class TBP_Dataset(Dataset):
         
         if self.transform:
             image = self.transform(image=image)["image"]
-            
         if self.meta_feature_columns is not None:
             # Load meta data and fill missing values
             meta = row[self.meta_feature_columns].values.astype(np.float32)
