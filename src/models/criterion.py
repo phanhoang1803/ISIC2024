@@ -40,23 +40,48 @@ class PAUCLoss(nn.Module):
         return loss
 
 class FocalLoss(nn.Module):
-    def __init__(self, alpha=torch.tensor([0.05, 0.95]), gamma=2, reduction='mean'):
+    # def __init__(self, alpha=torch.tensor([0.05, 0.95]), gamma=2, reduction='mean'):
+    #     super(FocalLoss, self).__init__()
+    #     self.alpha = alpha
+    #     self.gamma = gamma
+    #     self.reduction = reduction
+
+    # def forward(self, inputs, targets):
+    #     BCE_loss = nn.functional.binary_cross_entropy_with_logits(inputs, targets, reduction='none')
+    #     pt = torch.exp(-BCE_loss)
+    #     F_loss = self.alpha * (1-pt)**self.gamma * BCE_loss
+
+    #     if self.reduction == 'mean':
+    #         return torch.mean(F_loss)
+    #     elif self.reduction == 'sum':
+    #         return torch.sum(F_loss)
+    #     else:
+    #         return F_loss
+    
+    def __init__(self, alpha=None, gamma=2):
         super(FocalLoss, self).__init__()
-        self.alpha = alpha
+        if isinstance(alpha, (float, int, list)):
+            self.alpha = torch.tensor(alpha, dtype=torch.float32)
+        elif isinstance(alpha, torch.Tensor):
+            self.alpha = alpha
         self.gamma = gamma
-        self.reduction = reduction
 
     def forward(self, inputs, targets):
-        BCE_loss = nn.functional.binary_cross_entropy_with_logits(inputs, targets, reduction='none')
-        pt = torch.exp(-BCE_loss)
-        F_loss = self.alpha * (1-pt)**self.gamma * BCE_loss
+        if inputs.dim() > 2:
+            inputs = inputs.view(inputs.size(0), inputs.size(1), -1)  # N,C,H,W => N,C,H*W
+            inputs = inputs.transpose(1, 2)  # N,C,H*W => N,H*W,C
+            inputs = inputs.contiguous().view(-1, inputs.size(2))  # N,H*W,C => N*H*W,C
+        targets = targets.view(-1, 1)
 
-        if self.reduction == 'mean':
-            return torch.mean(F_loss)
-        elif self.reduction == 'sum':
-            return torch.sum(F_loss)
-        else:
-            return F_loss
+        logpt = -torch.nn.functional.binary_cross_entropy_with_logits(inputs, targets, reduction='none')
+        pt = torch.exp(logpt)
+
+        if self.alpha is not None:
+            at = self.alpha.gather(0, targets.data.view(-1))
+            logpt = logpt * at
+
+        loss = -((1 - pt) ** self.gamma) * logpt
+        return loss.mean()
 
 def criterion(outputs, targets, pos_weight=20.0, loss='bce_with_logits'):
     """
