@@ -158,13 +158,13 @@ class MultimodalClassifier(nn.Module):
             nn.ReLU6(),
             nn.Dropout(p=0.5),
 
-            nn.LayerNorm(64),
-            nn.Linear(64, 32),
-            nn.ReLU6(),
-            nn.Dropout(p=0.5),
+            # nn.LayerNorm(64),
+            # nn.Linear(64, 32),
+            # nn.ReLU6(),
+            # nn.Dropout(p=0.5),
 
             # nn.LayerNorm(32),
-            nn.Linear(32, num_classes),    
+            nn.Linear(64, num_classes),    
         )
         
         
