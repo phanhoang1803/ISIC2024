@@ -80,8 +80,8 @@ class TBP_Dataset(Dataset):
 
             # 0 -> (100 - confidence) * 0.5 / 100
             # 1 -> confidence * 0.5 / 100 + 0.5
-            df_positive["target"] = df_positive["tbp_lv_dnn_lesion_confidence"] * 0.5 / 100 + 0.5
-            df_negative["target"] = (100 - df_negative["tbp_lv_dnn_lesion_confidence"]) * 0.5 / 100
+            df_positive["target"] = df_positive["tbp_lv_dnn_lesion_confidence"] * 0.5 / 100.0 + 0.5
+            df_negative["target"] = (100.0 - df_negative["tbp_lv_dnn_lesion_confidence"]) * 0.5 / 100.0
     
             df = pd.concat([df_positive, df_negative]).reset_index()
     
