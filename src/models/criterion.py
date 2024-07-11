@@ -40,7 +40,7 @@ class PAUCLoss(nn.Module):
         return loss
 
 class FocalLoss(nn.Module):
-    def __init__(self, alpha=1, gamma=2, reduction='mean'):
+    def __init__(self, alpha=torch.tensor([0.05, 0.95]), gamma=2, reduction='mean'):
         super(FocalLoss, self).__init__()
         self.alpha = alpha
         self.gamma = gamma
