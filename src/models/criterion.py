@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score
 import torch
+import torch.nn.functional as F
+from torch.autograd import Variable
 
 class PAUCLoss(nn.Module):
     def __init__(self, min_tpr=0.8):
@@ -40,48 +42,35 @@ class PAUCLoss(nn.Module):
         return loss
 
 class FocalLoss(nn.Module):
-    # def __init__(self, alpha=torch.tensor([0.05, 0.95]), gamma=2, reduction='mean'):
-    #     super(FocalLoss, self).__init__()
-    #     self.alpha = alpha
-    #     self.gamma = gamma
-    #     self.reduction = reduction
-
-    # def forward(self, inputs, targets):
-    #     BCE_loss = nn.functional.binary_cross_entropy_with_logits(inputs, targets, reduction='none')
-    #     pt = torch.exp(-BCE_loss)
-    #     F_loss = self.alpha * (1-pt)**self.gamma * BCE_loss
-
-    #     if self.reduction == 'mean':
-    #         return torch.mean(F_loss)
-    #     elif self.reduction == 'sum':
-    #         return torch.sum(F_loss)
-    #     else:
-    #         return F_loss
-    
-    def __init__(self, alpha=None, gamma=2):
+    def __init__(self, gamma=2, alpha=0.05, size_average=True):
         super(FocalLoss, self).__init__()
-        if isinstance(alpha, (float, int, list)):
-            self.alpha = torch.tensor(alpha, dtype=torch.float32)
-        elif isinstance(alpha, torch.Tensor):
-            self.alpha = alpha
         self.gamma = gamma
+        self.alpha = alpha
+        if isinstance(alpha,(float,int, torch.long)): self.alpha = torch.Tensor([alpha,1-alpha])
+        if isinstance(alpha,list): self.alpha = torch.Tensor(alpha)
+        self.size_average = size_average
 
-    def forward(self, inputs, targets):
-        if inputs.dim() > 2:
-            inputs = inputs.view(inputs.size(0), inputs.size(1), -1)  # N,C,H,W => N,C,H*W
-            inputs = inputs.transpose(1, 2)  # N,C,H*W => N,H*W,C
-            inputs = inputs.contiguous().view(-1, inputs.size(2))  # N,H*W,C => N*H*W,C
-        targets = targets.view(-1, 1)
+    def forward(self, input, target):
+        if input.dim()>2:
+            input = input.view(input.size(0),input.size(1),-1)  # N,C,H,W => N,C,H*W
+            input = input.transpose(1,2)    # N,C,H*W => N,H*W,C
+            input = input.contiguous().view(-1,input.size(2))   # N,H*W,C => N*H*W,C
+        target = target.view(-1,1)
 
-        logpt = -torch.nn.functional.binary_cross_entropy_with_logits(inputs, targets, reduction='none')
-        pt = torch.exp(logpt)
+        logpt = F.log_softmax(input)
+        logpt = logpt.gather(1,target)
+        logpt = logpt.view(-1)
+        pt = Variable(logpt.data.exp())
 
         if self.alpha is not None:
-            at = self.alpha.gather(0, targets.data.view(-1))
-            logpt = logpt * at
+            if self.alpha.type()!=input.data.type():
+                self.alpha = self.alpha.type_as(input.data)
+            at = self.alpha.gather(0,target.data.view(-1))
+            logpt = logpt * Variable(at)
 
-        loss = -((1 - pt) ** self.gamma) * logpt
-        return loss.mean()
+        loss = -1 * (1-pt)**self.gamma * logpt
+        if self.size_average: return loss.mean()
+        else: return loss.sum()
 
 def criterion(outputs, targets, pos_weight=20.0, loss='bce_with_logits'):
     """
