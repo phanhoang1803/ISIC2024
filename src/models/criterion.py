@@ -72,14 +72,14 @@ def criterion(outputs, targets, pos_weight=20.0, loss='bce_with_logits'):
     # Calculate the binary cross entropy loss using the BCELoss function from torch.nn.
     # The BCELoss function takes the model's outputs and the true targets as input.
     if loss == 'bce':
-        return nn.BCELoss()(outputs, targets)
+        return nn.BCELoss()(torch.nn.Sigmoid()(outputs), targets)
     elif loss == 'bce_with_logits':
         if pos_weight is not None:
             return nn.BCEWithLogitsLoss(pos_weight=torch.tensor([pos_weight]).to(outputs.device))(outputs, targets)
         else:
             return nn.BCEWithLogitsLoss()(outputs, targets)
     elif loss == 'focal':
-        return FocalLoss()(outputs, targets)
+        return FocalLoss()(torch.nn.Sigmoid()(outputs), targets)
     elif loss == 'pauc':
         return PAUCLoss()(targets, outputs)
     else:
