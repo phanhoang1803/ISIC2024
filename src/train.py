@@ -343,8 +343,8 @@ def prepare_loaders(df: pd.DataFrame, fold: int, meta_feature_columns: list, dat
     df_valid[meta_feature_columns].describe()
     
     # Create the datasets
-    train_dataset = TBP_Dataset(df_train, meta_feature_columns=meta_feature_columns, transform=data_transforms["train"], to_prob=CONFIG['to_prob'])
-    valid_dataset = TBP_Dataset(df_valid, meta_feature_columns=meta_feature_columns, transform=data_transforms["valid"], to_prob=CONFIG['to_prob'])
+    train_dataset = TBP_Dataset(df_train, meta_feature_columns=meta_feature_columns, transform=data_transforms["train"], target_to_prob=CONFIG['target_to_prob'])
+    valid_dataset = TBP_Dataset(df_valid, meta_feature_columns=meta_feature_columns, transform=data_transforms["valid"], target_to_prob=CONFIG['target_to_prob'])
 
     # Create the data loaders
     train_loader = DataLoader(train_dataset, batch_size=CONFIG['train_batch_size'], 
