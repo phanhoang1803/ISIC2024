@@ -28,6 +28,7 @@ def parse_arguments():
     parser.add_argument('--downsample_type', type=str, default=None, help='Downsample type', choices=['clustering', 'random'])
     parser.add_argument('--extra_data_dirs', type=str, nargs='*', help='List of additional directories containing training data')
     parser.add_argument('--extra_neg_ratio', type=int, default=0, help='0: no negative samples, -1: load all data, >0: the ratio of negative samples to positive samples as specified')
+    parser.add_argument('--target_to_prob', action='store_true', help='Target to probability')
 
     ### Backbone parameters
     parser.add_argument('--architecture', type=str, default="EfficientNet", help='Architecture')

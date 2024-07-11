@@ -70,7 +70,7 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
         outputs = model(images, meta).squeeze()
         
         # Calculate loss
-        if CONFIG['to_prob']:
+        if CONFIG['target_to_prob']:
             crit = 'mse'
         else:
             crit = CONFIG['loss']

@@ -69,12 +69,12 @@ class ISICDataset(Dataset):
 
 
 class TBP_Dataset(Dataset):
-    def __init__(self, df, meta_feature_columns, transform=None, to_prob=False):
+    def __init__(self, df, meta_feature_columns, transform=None, target_to_prob=False):
         self.df = df.reset_index(drop=True)
         self.meta_feature_columns = meta_feature_columns
         self.transform = transform
 
-        if to_prob:
+        if target_to_prob:
             df_positive = df[df["target"] == 1].reset_index()
             df_negative = df[df["target"] == 0].reset_index()
 
