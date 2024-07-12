@@ -51,6 +51,17 @@ def resample_data(df: pd.DataFrame, feature_columns: list, target_column: str, u
     Returns:
     pd.DataFrame: The DataFrame with upsampled positive cases.
     """
+    # Replace infinity values with NaN
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    
+    # Impute NaN values with mean
+    imputer = SimpleImputer(strategy='mean')
+    df[feature_columns] = imputer.fit_transform(df[feature_columns])
+
+    # Clip large values to prevent issues with clustering
+    df[feature_columns] = np.clip(df[feature_columns], -1e9, 1e9)
+    
+    
     # Separate the features and target
     X = df[feature_columns]
     y = df[target_column]
