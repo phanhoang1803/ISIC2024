@@ -69,7 +69,7 @@ def resample_data(df: pd.DataFrame, feature_columns: list, target_column: str, u
             lambda x: x.flatten() if isinstance(x, np.ndarray) else np.nan
         )
         # Check if any entries are still lists or arrays with inconsistent sizes
-        for idx, data in df["image_data"].iteritems():
+        for idx, data in df["image_data"].items():
             if isinstance(data, np.ndarray) and data.size == 0:
                 print(f"Warning: Empty array found at index {idx}")
 
