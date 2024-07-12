@@ -67,7 +67,6 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
         batch_size = images.size(0)
         
         # Forward pass
-        print("Use meta: ", use_meta)
         if use_meta:
             outputs = model(images, meta).squeeze()
         else:
@@ -165,7 +164,12 @@ def valid_one_epoch(model, dataloader, use_meta, device, epoch, CONFIG):
         batch_size = images.size(0)
 
         # Perform forward pass
-        outputs = model(images, meta).squeeze()
+        if use_meta:
+            outputs = model(images, meta).squeeze()
+        else:
+            outputs = model(images).squeeze()
+        
+        # Calculate loss
         loss = criterion(outputs, targets, pos_weight=CONFIG['pos_weight'], loss=CONFIG['loss'])
         
         # Collect targets and outputs
