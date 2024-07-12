@@ -9,7 +9,7 @@ import pandas as pd
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from collections import defaultdict
-from data.data_loading import load_data, downsample
+from data.data_loading import load_data, downsample, upsample_positive
 from data.dataset import ISICDataset_for_Train, ISICDataset, TBP_Dataset
 from data.data_processing import get_transforms, feature_engineering
 from models.isic_model import ISICModel
@@ -383,6 +383,14 @@ def main():
     print("[INFO] Feature Engineering...")
     # Perform feature engineering
     df, meta_feature_columns = feature_engineering(df, use_new_features=CONFIG['use_new_features'])
+    
+    # Up-sample the positive samples
+    if CONFIG['upsample_ratio'] > 0:
+        df = upsample_positive(df=df,
+                               feature_columns=meta_feature_columns,
+                               target_column='target',
+                               upsample_ratio=CONFIG['upsample_ratio'],
+                               seed=CONFIG['seed'])
     
     # Downsample the negative samples
     df = downsample(df, remain_columns=meta_feature_columns, ratio=CONFIG['data_ratio'], seed=CONFIG['seed'], down_type=CONFIG['downsample_type'])

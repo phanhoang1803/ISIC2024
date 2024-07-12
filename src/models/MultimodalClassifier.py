@@ -9,7 +9,7 @@ class SingleMLP(nn.Module):
         super(SingleMLP, self).__init__()
         self.fc = nn.Linear(input_dim, output_dim)
         self.relu6 = nn.ReLU6()
-        self.dropout = nn.Dropout(p=0.3)
+        self.dropout = nn.Dropout(p=0.5)
         
     def forward(self, x):
         x = self.fc(x)

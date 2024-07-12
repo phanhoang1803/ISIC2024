@@ -5,6 +5,10 @@ from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.cluster import KMeans
 from sklearn.utils import resample
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.cluster import KMeans
+from imblearn.over_sampling import SMOTE
 
 def downsample(df: pd.DataFrame, remain_columns: list, ratio: int=20, seed: int=42, down_type: str=None):
     # Separate positive and negative samples
@@ -32,7 +36,35 @@ def downsample(df: pd.DataFrame, remain_columns: list, ratio: int=20, seed: int=
 
     return df
 
+def upsample_positive(df: pd.DataFrame, feature_columns: list, target_column: str, upsample_ratio: int = 20, seed: int = 42) -> pd.DataFrame:
+    """
+    Upsample positive cases in a DataFrame using SMOTE.
 
+    Parameters:
+    df (pd.DataFrame): The input DataFrame.
+    feature_columns (list): List of column names to be used as features.
+    target_column (str): The name of the target column.
+    upsample_ratio (int): The ratio of upsampling to perform (default is 20).
+    seed (int): Random seed for reproducibility (default is 42).
+
+    Returns:
+    pd.DataFrame: The DataFrame with upsampled positive cases.
+    """
+    # Separate the features and target
+    X = df[feature_columns]
+    y = df[target_column]
+
+    # Calculate the number of samples needed for the minority class
+    smote = SMOTE(sampling_strategy=upsample_ratio, random_state=seed)
+    
+    # Apply SMOTE
+    X_resampled, y_resampled = smote.fit_resample(X, y)
+
+    # Combine the resampled features and target into a new DataFrame
+    df_resampled = pd.DataFrame(X_resampled, columns=feature_columns)
+    df_resampled[target_column] = y_resampled
+
+    return df_resampled
 
 def load_data(ROOT_DIR, neg_ratio: int=20):
     """
