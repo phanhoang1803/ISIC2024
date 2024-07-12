@@ -81,7 +81,7 @@ def resample_data(df: pd.DataFrame, feature_columns: list, target_column: str, u
     df_resampled[target_column] = y_resampled
 
     # Merge with original DataFrame to maintain additional columns
-    resampled_df = pd.concat([df_resampled, df.drop(columns=feature_columns + [target_column])], axis=1)
+    resampled_df = pd.concat([df_resampled, df.drop(columns=feature_columns + [target_column])]).reset_index(drop=True)
 
     return resampled_df
 
