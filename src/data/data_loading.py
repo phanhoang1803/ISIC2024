@@ -56,7 +56,8 @@ def load_data(ROOT_DIR, neg_ratio: int=20):
             images.append(image)
         else:
             raise ValueError(f"Image at path {path} could not be loaded.")
-    df['image_data'] = images
+        
+    # df['image_data'] = images
 
     # Check and remove columns containing "Unnamed"
     df = df.drop(columns=df.columns[df.columns.str.contains('Unnamed')])
