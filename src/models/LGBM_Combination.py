@@ -87,8 +87,7 @@ class FeatureExtractor(nn.Module):
         return dim
 
     def forward(self, images):
-        x = self.model(images)
-        x = self.pooling(x).flatten(1)
+        x = self.cnn(images)
         
         for i, dropout in enumerate(self.dropouts):
             if i == 0:
