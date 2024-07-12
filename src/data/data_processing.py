@@ -81,7 +81,9 @@ def resample_data(df: pd.DataFrame, feature_columns: list, target_column: str, u
     df_resampled = pd.DataFrame(X_resampled, columns=feature_columns)
     df_resampled[target_column] = y_resampled
 
-    return df_resampled
+    resampled_df = df_resampled.merge(df.drop(columns=feature_columns + [target_column]), left_index=True, right_index=True, how='left')
+
+    return resampled_df
 
 def downsample_benign_samples(df, sample_count, remain_columns, seed):
     """
