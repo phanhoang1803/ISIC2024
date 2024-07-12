@@ -1,44 +1,119 @@
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
 import numpy as np
 from sklearn.preprocessing import OrdinalEncoder
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.cluster import KMeans
+from sklearn.utils import resample
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.cluster import KMeans
+from imblearn.over_sampling import SMOTE
+import pandas as pd
+import numpy as np
 
-def get_transforms(config):
+def downsample(df: pd.DataFrame, remain_columns: list, ratio: int=20, seed: int=42, down_type: str=None):
+    # Separate positive and negative samples
+    df_positive = df[df['target'] == 1].reset_index(drop=True)
+    df_negative = df[df['target'] == 0].reset_index(drop=True)
+        
+    # Filter df based on negative_ratio
+    if ratio == 0:                      # only include positive samples
+        df = df_positive
+    elif ratio > 0:                     # downsample negative samples
+        if down_type == 'clustering':                  # downsample benign samples using clustering
+            df_negative = downsample_benign_samples(df_negative, sample_count=df_positive.shape[0] * ratio, remain_columns=remain_columns, seed=seed)
+        elif down_type == 'random':          # downsample benign samples randomly
+            df_negative = resample(df_negative, 
+                                   replace=False, 
+                                   n_samples=df_positive.shape[0] * ratio, 
+                                   random_state=seed)
+        else: 
+            df_negative = df_negative.iloc[:df_positive.shape[0] * ratio, :]
+            
+        # Downsample the negative samples
+        df = pd.concat([df_positive, df_negative]).reset_index(drop=True)
+    else:                               # load all data
+        df = df
+
+    return df
+
+def resample_data(df: pd.DataFrame, feature_columns: list, target_column: str, upsample_ratio: int = 20, data_ratio: int = 3, seed: int = 42) -> pd.DataFrame:
     """
-    Returns a dictionary of Albumentations transforms for train and valid datasets.
+    Upsample positive cases in a DataFrame using SMOTE.
 
-    Args:
-        config (dict): Configuration dictionary containing image size.
+    Parameters:
+    df (pd.DataFrame): The input DataFrame.
+    feature_columns (list): List of column names to be used as features.
+    target_column (str): The name of the target column.
+    upsample_ratio (int): The ratio of upsampling to perform (default is 20).
+    seed (int): Random seed for reproducibility (default is 42).
 
     Returns:
-        dict: Dictionary containing train and valid Albumentations transforms.
+    pd.DataFrame: The DataFrame with upsampled positive cases.
     """
-    # Define the transforms
-    image_size = config['img_size']
-    mean = [0.485, 0.456, 0.406]
-    std = [0.229, 0.224, 0.225]
-    max_pixel_value = 255.0
+    # Separate the features and target
+    X = df[feature_columns]
+    y = df[target_column]
 
-    train_transform = A.Compose([
-        A.Resize(image_size, image_size),
-        A.RandomRotate90(p=0.5),
-        A.Flip(p=0.5),
-        A.Downscale(p=0.25),
-        A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.15, rotate_limit=60, p=0.5),
-        A.HueSaturationValue(hue_shift_limit=0.2, sat_shift_limit=0.2, val_shift_limit=0.2, p=0.5),
-        A.RandomBrightnessContrast(brightness_limit=(-0.1, 0.1), contrast_limit=(-0.1, 0.1), p=0.5),
-        A.Normalize(mean=mean, std=std, max_pixel_value=max_pixel_value, p=1.0),
-        ToTensorV2()], p=1.)
+    # Calculate the number of samples needed for the minority class
+    count_negatives = sum(y == 0)
+    count_positives = sum(y == 1)
+    target_positives = int(count_positives * upsample_ratio)
+    target_negatives = int(target_positives * data_ratio)
+    
+    # Calculate the number of samples needed for the minority class
+    smote = SMOTE(sampling_strategy={1: target_positives, 0: min(count_negatives, target_negatives)}, random_state=seed)
+    
+    # Apply SMOTE
+    X_resampled, y_resampled = smote.fit_resample(X, y)
 
-    valid_transform = A.Compose([
-        A.Resize(image_size, image_size),
-        A.Normalize(mean=mean, std=std, max_pixel_value=max_pixel_value, p=1.0),
-        ToTensorV2()], p=1.)
+    # Combine the resampled features and target into a new DataFrame
+    df_resampled = pd.DataFrame(X_resampled, columns=feature_columns)
+    df_resampled[target_column] = y_resampled
 
-    return {
-        "train": train_transform,
-        "valid": valid_transform
-    }
+    return df_resampled
+
+def downsample_benign_samples(df, sample_count, remain_columns, seed):
+    """
+    Downsample benign samples ensuring diversity by using clustering.
+    
+    Args:
+        benign_df (pd.DataFrame): DataFrame containing benign samples.
+        malignant_count (int): Number of malignant samples to match.
+        seed (int): Random seed for reproducibility.
+    
+    Returns:
+        pd.DataFrame: Downsampled benign samples.
+    """
+    print("[INFO] Downsample benign samples using clustering")
+    
+    # Replace infinity values with NaN
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    
+    # Impute NaN values with mean
+    imputer = SimpleImputer(strategy='mean')
+    df[remain_columns] = imputer.fit_transform(df[remain_columns])
+
+    # Clip large values to prevent issues with clustering
+    df[remain_columns] = np.clip(df[remain_columns], -1e9, 1e9)
+
+    # Use K-Means clustering to find clusters in samples
+    num_clusters = sample_count
+    
+    pipeline = Pipeline([
+        ('kmeans', KMeans(n_clusters=num_clusters, random_state=seed, verbose=True))  # Apply KMeans clustering
+    ])
+
+    # Fit on remaining columns
+    df['cluster'] = pipeline.fit_predict(df[remain_columns])
+    
+    # Select one sample from each cluster
+    downsampled_samples = df.groupby('cluster').apply(lambda x: x.sample(1, random_state=seed)).reset_index(drop=True)
+    
+    # Drop the cluster column before returning
+    downsampled_samples.drop(columns=['cluster'], inplace=True)
+    
+    return downsampled_samples
 
 def feature_engineering(df, use_new_features=True):
     """

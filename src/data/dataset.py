@@ -5,7 +5,48 @@ import torch
 from torch.utils.data import Dataset
 import numpy as np
 import pandas as pd
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
 
+
+def get_transforms(config):
+    """
+    Returns a dictionary of Albumentations transforms for train and valid datasets.
+
+    Args:
+        config (dict): Configuration dictionary containing image size.
+
+    Returns:
+        dict: Dictionary containing train and valid Albumentations transforms.
+    """
+    # Define the transforms
+    image_size = config['img_size']
+    mean = [0.485, 0.456, 0.406]
+    std = [0.229, 0.224, 0.225]
+    max_pixel_value = 255.0
+
+    train_transform = A.Compose([
+        A.Resize(image_size, image_size),
+        A.RandomRotate90(p=0.5),
+        A.Flip(p=0.5),
+        A.Downscale(p=0.25),
+        A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.15, rotate_limit=60, p=0.5),
+        A.HueSaturationValue(hue_shift_limit=0.2, sat_shift_limit=0.2, val_shift_limit=0.2, p=0.5),
+        A.RandomBrightnessContrast(brightness_limit=(-0.1, 0.1), contrast_limit=(-0.1, 0.1), p=0.5),
+        A.Normalize(mean=mean, std=std, max_pixel_value=max_pixel_value, p=1.0),
+        ToTensorV2()], p=1.)
+
+    valid_transform = A.Compose([
+        A.Resize(image_size, image_size),
+        A.Normalize(mean=mean, std=std, max_pixel_value=max_pixel_value, p=1.0),
+        ToTensorV2()], p=1.)
+
+    return {
+        "train": train_transform,
+        "valid": valid_transform
+    }
+    
+    
 class ISICDataset_for_Train(Dataset):
     def __init__(self, df, transforms=None):
         self.df_positive = df[df["target"] == 1].reset_index()

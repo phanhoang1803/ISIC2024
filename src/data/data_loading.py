@@ -1,70 +1,7 @@
 import pandas as pd
 import numpy as np
 import glob
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.cluster import KMeans
-from sklearn.utils import resample
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.cluster import KMeans
-from imblearn.over_sampling import SMOTE
-
-def downsample(df: pd.DataFrame, remain_columns: list, ratio: int=20, seed: int=42, down_type: str=None):
-    # Separate positive and negative samples
-    df_positive = df[df['target'] == 1].reset_index(drop=True)
-    df_negative = df[df['target'] == 0].reset_index(drop=True)
-        
-    # Filter df based on negative_ratio
-    if ratio == 0:                      # only include positive samples
-        df = df_positive
-    elif ratio > 0:                     # downsample negative samples
-        if down_type == 'clustering':                  # downsample benign samples using clustering
-            df_negative = downsample_benign_samples(df_negative, sample_count=df_positive.shape[0] * ratio, remain_columns=remain_columns, seed=seed)
-        elif down_type == 'random':          # downsample benign samples randomly
-            df_negative = resample(df_negative, 
-                                   replace=False, 
-                                   n_samples=df_positive.shape[0] * ratio, 
-                                   random_state=seed)
-        else: 
-            df_negative = df_negative.iloc[:df_positive.shape[0] * ratio, :]
-            
-        # Downsample the negative samples
-        df = pd.concat([df_positive, df_negative]).reset_index(drop=True)
-    else:                               # load all data
-        df = df
-
-    return df
-
-def upsample_positive(df: pd.DataFrame, feature_columns: list, target_column: str, upsample_ratio: int = 20, seed: int = 42) -> pd.DataFrame:
-    """
-    Upsample positive cases in a DataFrame using SMOTE.
-
-    Parameters:
-    df (pd.DataFrame): The input DataFrame.
-    feature_columns (list): List of column names to be used as features.
-    target_column (str): The name of the target column.
-    upsample_ratio (int): The ratio of upsampling to perform (default is 20).
-    seed (int): Random seed for reproducibility (default is 42).
-
-    Returns:
-    pd.DataFrame: The DataFrame with upsampled positive cases.
-    """
-    # Separate the features and target
-    X = df[feature_columns]
-    y = df[target_column]
-
-    # Calculate the number of samples needed for the minority class
-    smote = SMOTE(sampling_strategy=upsample_ratio, random_state=seed)
-    
-    # Apply SMOTE
-    X_resampled, y_resampled = smote.fit_resample(X, y)
-
-    # Combine the resampled features and target into a new DataFrame
-    df_resampled = pd.DataFrame(X_resampled, columns=feature_columns)
-    df_resampled[target_column] = y_resampled
-
-    return df_resampled
+from data.data_processing import downsample
 
 def load_data(ROOT_DIR, neg_ratio: int=20):
     """
@@ -114,45 +51,3 @@ def load_data(ROOT_DIR, neg_ratio: int=20):
     df = df.drop(columns=df.columns[df.columns.str.contains('Unnamed')])
 
     return df
-
-def downsample_benign_samples(df, sample_count, remain_columns, seed):
-    """
-    Downsample benign samples ensuring diversity by using clustering.
-    
-    Args:
-        benign_df (pd.DataFrame): DataFrame containing benign samples.
-        malignant_count (int): Number of malignant samples to match.
-        seed (int): Random seed for reproducibility.
-    
-    Returns:
-        pd.DataFrame: Downsampled benign samples.
-    """
-    print("[INFO] Downsample benign samples using clustering")
-    
-    # Replace infinity values with NaN
-    df.replace([np.inf, -np.inf], np.nan, inplace=True)
-    
-    # Impute NaN values with mean
-    imputer = SimpleImputer(strategy='mean')
-    df[remain_columns] = imputer.fit_transform(df[remain_columns])
-
-    # Clip large values to prevent issues with clustering
-    df[remain_columns] = np.clip(df[remain_columns], -1e9, 1e9)
-
-    # Use K-Means clustering to find clusters in samples
-    num_clusters = sample_count
-    
-    pipeline = Pipeline([
-        ('kmeans', KMeans(n_clusters=num_clusters, random_state=seed, verbose=True))  # Apply KMeans clustering
-    ])
-
-    # Fit on remaining columns
-    df['cluster'] = pipeline.fit_predict(df[remain_columns])
-    
-    # Select one sample from each cluster
-    downsampled_samples = df.groupby('cluster').apply(lambda x: x.sample(1, random_state=seed)).reset_index(drop=True)
-    
-    # Drop the cluster column before returning
-    downsampled_samples.drop(columns=['cluster'], inplace=True)
-    
-    return downsampled_samples
