@@ -64,6 +64,7 @@ def resample_data(df: pd.DataFrame, feature_columns: list, target_column: str, u
 
     # Check for image_data and flatten if necessary
     if "image_data" in df.columns:
+        print("[INFO] Flattening image_data")
         df["image_data"] = df["image_data"].apply(lambda x: x.flatten() if isinstance(x, np.ndarray) else x)
 
     # Separate the features and target
