@@ -52,7 +52,7 @@ def resample_data(df: pd.DataFrame, feature_columns: list, target_column: str, u
     pd.DataFrame: The DataFrame with upsampled positive cases.
     """
     # Replace infinity values with NaN
-    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    df[feature_columns].replace([np.inf, -np.inf], np.nan, inplace=True)
     
     # Impute NaN values with mean
     imputer = SimpleImputer(strategy='mean')
