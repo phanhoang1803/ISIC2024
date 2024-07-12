@@ -61,7 +61,6 @@ def resample_data(df: pd.DataFrame, feature_columns: list, target_column: str, u
     # Clip large values to prevent issues with clustering
     df[feature_columns] = np.clip(df[feature_columns], -1e9, 1e9)
     
-    
     # Separate the features and target
     X = df[feature_columns]
     y = df[target_column]
