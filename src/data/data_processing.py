@@ -75,6 +75,7 @@ def resample_data(df: pd.DataFrame, feature_columns: list, target_column: str, u
 
     # Separate the features and target
     feature_columns = feature_columns + ["image_data"]
+    df["image_data"] = 0
     X = df[feature_columns]
     y = df[target_column]
 
