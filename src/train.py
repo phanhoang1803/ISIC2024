@@ -401,7 +401,7 @@ def main():
     # Create Folds
     sgkf = StratifiedGroupKFold(n_splits=CONFIG['n_fold'])
 
-    for fold, ( _, val_) in enumerate(sgkf.split(df, df.target, None)):
+    for fold, ( _, val_) in enumerate(sgkf.split(df, df.target, df.patient_id)):
         df.loc[val_ , "kfold"] = int(fold)
     
     # Initialize model
