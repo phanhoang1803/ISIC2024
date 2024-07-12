@@ -65,7 +65,13 @@ def resample_data(df: pd.DataFrame, feature_columns: list, target_column: str, u
     # Check for image_data and flatten if necessary
     if "image_data" in df.columns:
         print("[INFO] Flattening image_data")
-        df["image_data"] = df["image_data"].apply(lambda x: x.flatten() if isinstance(x, np.ndarray) else x)
+        df["image_data"] = df["image_data"].apply(
+            lambda x: x.flatten() if isinstance(x, np.ndarray) else np.nan
+        )
+        # Check if any entries are still lists or arrays with inconsistent sizes
+        for idx, data in df["image_data"].iteritems():
+            if isinstance(data, np.ndarray) and data.size == 0:
+                print(f"Warning: Empty array found at index {idx}")
 
     # Separate the features and target
     feature_columns = feature_columns + ["image_data"]
