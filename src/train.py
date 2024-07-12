@@ -67,6 +67,7 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
         batch_size = images.size(0)
         
         # Forward pass
+        print("Use meta: ", use_meta)
         if use_meta:
             outputs = model(images, meta).squeeze()
         else:
