@@ -141,7 +141,7 @@ class TBP_Dataset(Dataset):
         target = row['target']
         
         if self.transform:
-            image = self.transform(image=row["image_data"])["image"]
+            image = self.transform(image=image)["image"]
         if self.meta_feature_columns is not None:
             # Load meta data and fill missing values
             meta = row[self.meta_feature_columns].values.astype(np.float32)
