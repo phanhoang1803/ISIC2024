@@ -46,25 +46,22 @@ def resample_data(df: pd.DataFrame, feature_columns: list, target_column: str, u
     feature_columns (list): List of column names to be used as features.
     target_column (str): The name of the target column.
     upsample_ratio (int): The ratio of upsampling to perform (default is 20).
+    data_ratio (int): Ratio of negative to positive samples (default is 3).
     seed (int): Random seed for reproducibility (default is 42).
 
     Returns:
     pd.DataFrame: The DataFrame with upsampled positive cases.
     """
     # Replace infinity values with NaN
-    df[feature_columns] = df[feature_columns].replace([np.inf, -np.inf], np.nan, inplace=True)
-    
+    df[feature_columns] = df[feature_columns].replace([np.inf, -np.inf], np.nan)
+
     # Impute NaN values with mean
     imputer = SimpleImputer(strategy='mean')
     df[feature_columns] = imputer.fit_transform(df[feature_columns])
 
     # Clip large values to prevent issues with clustering
     df[feature_columns] = np.clip(df[feature_columns], -1e9, 1e9)
-    
-    # Flat the image data
-    # df["image_data"] = df["image_data"].apply(lambda x: x.flatten())
-    
-    # feature_columns = feature_columns + ["image_data"]
+
     # Separate the features and target
     X = df[feature_columns]
     y = df[target_column]
@@ -74,18 +71,17 @@ def resample_data(df: pd.DataFrame, feature_columns: list, target_column: str, u
     count_positives = sum(y == 1)
     target_positives = int(count_positives * upsample_ratio)
     target_negatives = int(target_positives * data_ratio)
-    
-    # Calculate the number of samples needed for the minority class
-    smote = SMOTE(sampling_strategy={1: target_positives, 0: min(count_negatives, target_negatives)}, random_state=seed)
-    
+
     # Apply SMOTE
+    smote = SMOTE(sampling_strategy={1: target_positives, 0: min(count_negatives, target_negatives)}, random_state=seed)
     X_resampled, y_resampled = smote.fit_resample(X, y)
 
     # Combine the resampled features and target into a new DataFrame
     df_resampled = pd.DataFrame(X_resampled, columns=feature_columns)
     df_resampled[target_column] = y_resampled
 
-    resampled_df = df_resampled.merge(df.drop(columns=feature_columns + [target_column]), left_index=True, right_index=True, how='left')
+    # Merge with original DataFrame to maintain additional columns
+    resampled_df = pd.concat([df_resampled, df.drop(columns=feature_columns + [target_column])], axis=1)
 
     return resampled_df
 
