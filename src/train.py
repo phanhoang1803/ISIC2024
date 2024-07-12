@@ -9,9 +9,9 @@ import pandas as pd
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from collections import defaultdict
-from data.data_loading import load_data, downsample, resample_data
-from data.dataset import ISICDataset_for_Train, ISICDataset, TBP_Dataset
-from data.data_processing import get_transforms, feature_engineering
+from data.data_loading import load_data
+from data.dataset import ISICDataset_for_Train, ISICDataset, TBP_Dataset, get_transforms
+from data.data_processing import feature_engineering, downsample, resample_data
 from models.isic_model import ISICModel
 from models.RNN_GRU_model import ISICModel_MaskRNN_GRU
 from models.EfficientNet_FPN_SE import EfficientNet_FPN_SE
