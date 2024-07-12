@@ -63,6 +63,7 @@ def resample_data(df: pd.DataFrame, feature_columns: list, target_column: str, u
     df[feature_columns] = np.clip(df[feature_columns], -1e9, 1e9)
 
     # Separate the features and target
+    feature_columns = feature_columns + ["image_data"]
     X = df[feature_columns]
     y = df[target_column]
 
@@ -81,9 +82,9 @@ def resample_data(df: pd.DataFrame, feature_columns: list, target_column: str, u
     df_resampled[target_column] = y_resampled
 
     # Merge with original DataFrame to maintain additional columns
-    resampled_df = pd.concat([df_resampled, df.drop(columns=feature_columns + [target_column])]).reset_index(drop=True)
+    # resampled_df = pd.concat([df_resampled, df.drop(columns=feature_columns + [target_column])]).reset_index(drop=True)
 
-    return resampled_df
+    return df_resampled
 
 def downsample_benign_samples(df, sample_count, remain_columns, seed):
     """
