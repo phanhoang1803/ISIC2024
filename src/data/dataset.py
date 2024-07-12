@@ -1,5 +1,6 @@
 import cv2
 import random
+from sklearn.discriminant_analysis import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
 import torch
 from torch.utils.data import Dataset
@@ -126,6 +127,9 @@ class TBP_Dataset(Dataset):
     
             df = pd.concat([df_positive, df_negative]).reset_index()
     
+        scaler = StandardScaler()
+        df[self.meta_feature_columns] = scaler.fit_transform(df[self.meta_feature_columns])
+    
     def __len__(self):
         return self.df.shape[0]
     
@@ -137,7 +141,7 @@ class TBP_Dataset(Dataset):
         target = row['target']
         
         if self.transform:
-            image = self.transform(image=image)["image"]
+            image = self.transform(image=row["image_data"])["image"]
         if self.meta_feature_columns is not None:
             # Load meta data and fill missing values
             meta = row[self.meta_feature_columns].values.astype(np.float32)

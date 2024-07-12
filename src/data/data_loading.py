@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import glob
 from data.data_processing import downsample
+import cv2
 
 def load_data(ROOT_DIR, neg_ratio: int=20):
     """
@@ -46,6 +47,15 @@ def load_data(ROOT_DIR, neg_ratio: int=20):
 
     # Filter the DataFrame based on the valid file paths
     df = df[df['file_path'].isin(train_images)].reset_index(drop=True)
+
+    images = []
+    for path in df['file_path']:
+        image = cv2.imread(path)
+        if image is not None:
+            images.append(image)
+        else:
+            raise ValueError(f"Image at path {path} could not be loaded.")
+    df['image_data'] = images
 
     # Check and remove columns containing "Unnamed"
     df = df.drop(columns=df.columns[df.columns.str.contains('Unnamed')])
