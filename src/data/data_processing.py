@@ -9,14 +9,18 @@ import pandas as pd
 import numpy as np
 
 def downsample(df: pd.DataFrame, remain_columns: list, ratio: int=20, seed: int=42, down_type: str=None):
+    print('[INFO] Downsample data...')
+    
     # Separate positive and negative samples
     df_positive = df[df['target'] == 1].reset_index(drop=True)
     df_negative = df[df['target'] == 0].reset_index(drop=True)
         
     # Filter df based on negative_ratio
     if ratio == 0:                      # only include positive samples
+        print('[INFO] Only include positive samples')
         df = df_positive
     elif ratio > 0:                     # downsample negative samples
+        print('[INFO] Downsample negative samples with ratio: ', ratio)
         if down_type == 'clustering':                  # downsample benign samples using clustering
             df_negative = downsample_benign_samples(df_negative, sample_count=df_positive.shape[0] * ratio, remain_columns=remain_columns, seed=seed)
         elif down_type == 'random':          # downsample benign samples randomly
@@ -30,6 +34,7 @@ def downsample(df: pd.DataFrame, remain_columns: list, ratio: int=20, seed: int=
         # Downsample the negative samples
         df = pd.concat([df_positive, df_negative]).reset_index(drop=True)
     else:                               # load all data
+        print('[INFO] Load all data')
         df = df
 
     return df
