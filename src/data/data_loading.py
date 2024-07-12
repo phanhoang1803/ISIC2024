@@ -36,7 +36,7 @@ def load_data(ROOT_DIR, neg_ratio: int=20):
         raise KeyError("Column 'isic_id' is missing from the DataFrame.")
 
     # Downsample
-    df = downsample(df, neg_ratio)
+    df = downsample(df, ratio=neg_ratio)
 
     # Add file path column
     df['file_path'] = df['isic_id'].apply(lambda x: f'{TRAIN_DIR}/{x}.jpg')

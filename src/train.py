@@ -372,7 +372,6 @@ def main():
 
     # Load main data (ISIC 2024)
     print("[INFO] Loading data...")
-    print("[INFO] Neg ratio: ", args.neg_ratio)
     df = load_data(args.root_dir, neg_ratio=args.neg_ratio) # Default = -1, load all data
     meta_feature_columns = None
     

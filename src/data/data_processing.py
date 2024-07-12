@@ -8,7 +8,7 @@ from imblearn.over_sampling import SMOTE
 import pandas as pd
 import numpy as np
 
-def downsample(df: pd.DataFrame, remain_columns: list, ratio: int=20, seed: int=42, down_type: str=None):
+def downsample(df: pd.DataFrame, remain_columns: list=None, ratio: int=20, seed: int=42, down_type: str=None):
     print('[INFO] Downsample data...')
     
     # Separate positive and negative samples
