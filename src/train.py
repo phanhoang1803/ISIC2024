@@ -19,7 +19,7 @@ from models.ensemble_model import EnsembleModel
 from models.CombinedAttentionModel import CombinedAttentionModel
 from models.CombinedModel import CombinedModel
 from models.MultimodalClassifier import MultimodalClassifier
-
+from models.LGBM_Combination import FeatureExtractor
 
 # from utils.config import CONFIG
 from utils.seed import seed_torch
@@ -67,7 +67,10 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
         batch_size = images.size(0)
         
         # Forward pass
-        outputs = model(images, meta).squeeze()
+        if use_meta:
+            outputs = model(images, meta).squeeze()
+        else:
+            outputs = model(images).squeeze()
         
         # Calculate loss
         if CONFIG['target_to_prob']:
@@ -440,7 +443,11 @@ def main():
                                      num_classes=1,
                                      model_name=args.model_name,
                                      pretrained=True)
-    
+    elif CONFIG['architecture'] == 'FeatureExtractor':
+        model = FeatureExtractor(model_name=args.model_name,
+                                 num_classes=1,
+                                 pretrained=True)
+        
     model.to(CONFIG['device'])
 
     # Prepare data loaders

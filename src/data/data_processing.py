@@ -4,9 +4,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.cluster import KMeans
 from sklearn.utils import resample
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.cluster import KMeans
 from imblearn.over_sampling import SMOTE
 import pandas as pd
 import numpy as np
