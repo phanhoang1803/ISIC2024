@@ -62,9 +62,9 @@ def resample_data(df: pd.DataFrame, feature_columns: list, target_column: str, u
     df[feature_columns] = np.clip(df[feature_columns], -1e9, 1e9)
     
     # Flat the image data
-    df["image_data"] = df["image_data"].apply(lambda x: x.flatten())
+    # df["image_data"] = df["image_data"].apply(lambda x: x.flatten())
     
-    feature_columns = feature_columns + ["image_data"]
+    # feature_columns = feature_columns + ["image_data"]
     # Separate the features and target
     X = df[feature_columns]
     y = df[target_column]
