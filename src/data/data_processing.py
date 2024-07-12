@@ -62,6 +62,10 @@ def resample_data(df: pd.DataFrame, feature_columns: list, target_column: str, u
     # Clip large values to prevent issues with clustering
     df[feature_columns] = np.clip(df[feature_columns], -1e9, 1e9)
 
+    # Check for image_data and flatten if necessary
+    if "image_data" in feature_columns:
+        df["image_data"] = df["image_data"].apply(lambda x: x.flatten() if isinstance(x, np.ndarray) else x)
+
     # Separate the features and target
     feature_columns = feature_columns + ["image_data"]
     X = df[feature_columns]
