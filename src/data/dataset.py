@@ -116,6 +116,9 @@ class TBP_Dataset(Dataset):
         self.meta_feature_columns = meta_feature_columns
         self.transform = transform
 
+        if df[self.meta_feature_columns].shape[0] == 0:
+            raise ValueError("The DataFrame for scaling is empty.")
+
         if target_to_prob:
             df_positive = df[df["target"] == 1].reset_index()
             df_negative = df[df["target"] == 0].reset_index()
