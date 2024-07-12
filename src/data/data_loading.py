@@ -51,6 +51,7 @@ def load_data(ROOT_DIR, neg_ratio: int=20):
     images = []
     for path in df['file_path']:
         image = cv2.imread(path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         if image is not None:
             images.append(image)
         else:
