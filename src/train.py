@@ -387,17 +387,8 @@ def main():
     # Perform feature engineering
     df, meta_feature_columns = feature_engineering(df, use_new_features=CONFIG['use_new_features'])
     
-    # Up-sample the positive samples
-    # if CONFIG['upsample_ratio'] > 1:
-    df = resample_data(df=df,
-                            feature_columns=meta_feature_columns,
-                            target_column='target',
-                            upsample_ratio=CONFIG['upsample_ratio'],
-                            data_ratio=CONFIG['data_ratio'],
-                            seed=CONFIG['seed'])
-    
     # # Downsample the negative samples
-    # df = downsample(df, remain_columns=meta_feature_columns, ratio=CONFIG['data_ratio'], seed=CONFIG['seed'], down_type=CONFIG['downsample_type'])
+    df = downsample(df, remain_columns=meta_feature_columns, ratio=CONFIG['data_ratio'], seed=CONFIG['seed'], down_type=CONFIG['downsample_type'])
     
     print("[INFO] Columns in Final DataFrame:", df.columns)
     print("[INFO] Sample data from Final DataFrame:\n", df.head())
