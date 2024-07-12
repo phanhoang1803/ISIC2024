@@ -18,8 +18,6 @@ class FeatureExtractor(nn.Module):
         self.cnn = self._create_cnn()
         self.output_dim = self._get_output_dim()
         
-        self.pooling = nn.ReLU6()
-        
         self.dropouts = nn.ModuleList([nn.Dropout(0.5) for _ in range(5)])
         
         self.fc = nn.Linear(self.output_dim, num_classes)
