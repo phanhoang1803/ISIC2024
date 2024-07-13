@@ -19,7 +19,7 @@ class FeatureExtractor(nn.Module):
         self.cnn = self._create_cnn()
         self.pooling = nn.AdaptiveAvgPool2d(1)        
         
-        self.dropouts = nn.ModuleList([nn.Dropout(0.5) for _ in range(5)])
+        self.dropouts = nn.ModuleList([nn.Dropout(0.65) for _ in range(5)])
         
         self.fc = nn.Linear(self.output_dim, num_classes)
         # self.sigmoid = nn.Sigmoid()
