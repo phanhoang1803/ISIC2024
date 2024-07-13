@@ -26,7 +26,7 @@ from utils.seed import seed_torch
 from utils.utils import make_dirs, save_model
 from models.criterion import valid_score, criterion, pAUC_score
 from utils.utils import parse_arguments
-from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold
+from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold, GroupKFold
 
 
 
@@ -404,7 +404,8 @@ def main():
     CONFIG['T_max'] = df.shape[0] * (CONFIG["n_fold"]-1) * CONFIG['epochs'] // CONFIG['train_batch_size'] // CONFIG["n_fold"]
     
     # Create Folds
-    sgkf = StratifiedGroupKFold(n_splits=CONFIG['n_fold'])
+    # sgkf = StratifiedGroupKFold(n_splits=CONFIG['n_fold'])
+    sgkf = GroupKFold(n_splits=CONFIG['n_fold'])
 
     for fold, ( _, val_) in enumerate(sgkf.split(df, df.target, df.patient_id)):
         df.loc[val_ , "kfold"] = int(fold)
