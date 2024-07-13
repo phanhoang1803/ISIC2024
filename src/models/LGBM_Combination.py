@@ -55,7 +55,7 @@ class FeatureExtractor(nn.Module):
             model.heads = nn.Identity()
         elif self.model_name.startswith("efficientnet"):
             model.classifier = nn.Identity()               
-            model.avgpool = nn.AdaptiveAvgPool2d(1)     
+            model.avgpool = nn.Identity()   
                     
         return model
     
