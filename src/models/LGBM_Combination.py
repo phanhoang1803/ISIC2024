@@ -55,7 +55,7 @@ class FeatureExtractor(nn.Module):
             model.heads = nn.Identity()
         elif self.model_name.startswith("efficientnet"):
             model.classifier = nn.Identity()               
-            model.avgpool = nn.Identity()   
+            # model.avgpool = nn.Identity()   
                     
         return model
     
@@ -89,7 +89,7 @@ class FeatureExtractor(nn.Module):
     def forward(self, images):
         x = self.cnn(images)
         print(x.shape)
-        x = self.pooling(x)
+        # x = self.pooling(x)
         print(x.shape)
         
         for i, dropout in enumerate(self.dropouts):
