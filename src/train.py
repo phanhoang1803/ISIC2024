@@ -411,7 +411,7 @@ def main():
         df.loc[val_ , "kfold"] = int(fold)
     
     # Initialize model
-    if CONFIG['architecture'] == 'EfficientNet':
+    if CONFIG['architecture'] == 'ISICModel':
         model = ISICModel(CONFIG['model_name'], pretrained=True, checkpoint_path=CONFIG['checkpoint_path'])
     elif CONFIG['architecture'] == 'MaskRNN_GRU':
         model = ISICModel_MaskRNN_GRU(CONFIG['model_name'], pretrained=True, checkpoint_path=CONFIG['checkpoint_path'])
