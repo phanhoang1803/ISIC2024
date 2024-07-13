@@ -452,15 +452,21 @@ def main():
     train_loader, valid_loader = prepare_loaders(df, fold=CONFIG["fold"], meta_feature_columns=meta_feature_columns, data_transforms=transforms, CONFIG=CONFIG)
     
     # Initialize optimizer and scheduler
-    if CONFIG['optimizer'] == 'Adam':
-        optimizer = optim.Adam(model.parameters(), lr=CONFIG['learning_rate'], weight_decay=CONFIG['weight_decay'])
-    elif CONFIG['optimizer'] == 'AdamW':
-        optimizer = optim.AdamW(model.parameters(), lr=CONFIG['learning_rate'], weight_decay=CONFIG['weight_decay'])
-    elif CONFIG['optimizer'] == 'RAdam':
-        optimizer = optim.RAdam(model.parameters(), lr=CONFIG['learning_rate'], weight_decay=CONFIG['weight_decay'])
-    elif CONFIG['optimizer'] == 'SGD':
-        optimizer = optim.SGD(model.parameters(), lr=CONFIG['learning_rate'], weight_decay=CONFIG['weight_decay'])
-    
+    # if CONFIG['optimizer'] == 'Adam':
+    #     optimizer = optim.Adam(model.parameters(), lr=CONFIG['learning_rate'], weight_decay=CONFIG['weight_decay'])
+    # elif CONFIG['optimizer'] == 'AdamW':
+    #     optimizer = optim.AdamW(model.parameters(), lr=CONFIG['learning_rate'], weight_decay=CONFIG['weight_decay'])
+    # elif CONFIG['optimizer'] == 'RAdam':
+    #     optimizer = optim.RAdam(model.parameters(), lr=CONFIG['learning_rate'], weight_decay=CONFIG['weight_decay'])
+    # elif CONFIG['optimizer'] == 'SGD':
+    #     optimizer = optim.SGD(model.parameters(), lr=CONFIG['learning_rate'], weight_decay=CONFIG['weight_decay'])
+    # elif CONFIG['optimizer'] == 'RMSprop':
+    #     optimizer = optim.RMSprop(model.parameters(), lr=CONFIG['learning_rate'], weight_decay=CONFIG['weight_decay'])
+    # elif CONFIG['optimizer'] == 'Adadelta':
+    #     optimizer = optim.Adadelta(model.parameters(), lr=CONFIG['learning_rate'], weight_decay=CONFIG['weight_decay'])
+
+    optimizer = getattr(optim, CONFIG['optimizer'])(model.parameters(), lr=CONFIG['learning_rate'], weight_decay=CONFIG['weight_decay'])  
+        
     scheduler = fetch_scheduler(optimizer, CONFIG)
 
     # Run training
