@@ -12,7 +12,7 @@ import numpy as np
 class ISICModel(nn.Module):
     def __init__(self, model_name, num_classes=1, pretrained=True, checkpoint_path=None):
         super(ISICModel, self).__init__()
-        self.model = timm.create_model(model_name, pretrained=pretrained, checkpoint_path=checkpoint_path)
+        self.model = getattr(models, model_name)(pretrained=pretrained)
 
         in_features = self.model.classifier.in_features
         self.model.classifier = nn.Identity()
