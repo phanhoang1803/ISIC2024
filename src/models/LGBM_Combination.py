@@ -14,9 +14,10 @@ class FeatureExtractor(nn.Module):
         super(FeatureExtractor, self).__init__()
         self.model_name = model_name
         self.pretrained = pretrained
+        self.output_dim = self._get_output_dim()
         
         self.cnn = self._create_cnn()
-        self.output_dim = self._get_output_dim()
+        self.pooling = nn.AdaptiveAvgPool2d(1)        
         
         self.dropouts = nn.ModuleList([nn.Dropout(0.7) for _ in range(5)])
         
@@ -53,7 +54,8 @@ class FeatureExtractor(nn.Module):
         elif self.model_name.startswith("vit"):
             model.heads = nn.Identity()
         elif self.model_name.startswith("efficientnet"):
-            model.classifier = nn.Identity()                    
+            model.classifier = nn.Identity()               
+            model.avgpool = nn.AdaptiveAvgPool2d(1)     
                     
         return model
     
