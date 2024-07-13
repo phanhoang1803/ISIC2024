@@ -88,7 +88,9 @@ class FeatureExtractor(nn.Module):
 
     def forward(self, images):
         x = self.cnn(images)
-        x = self.pooling(x).view(x.shape[0], -1)
+        print(x.shape)
+        x = self.pooling(x)
+        print(x.shape)
         
         for i, dropout in enumerate(self.dropouts):
             if i == 0:
