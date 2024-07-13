@@ -97,5 +97,5 @@ class FeatureExtractor(nn.Module):
                 
         out /= len(self.dropouts)
         
-        return out
+        return out.squeeze()
     
