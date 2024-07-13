@@ -68,9 +68,9 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, use_meta, device, e
         
         # Forward pass
         if use_meta:
-            outputs = model(images, meta)
+            outputs = model(images, meta).squeeze()
         else:
-            outputs = model(images)
+            outputs = model(images).squeeze()
         
         # Calculate loss
         if CONFIG['target_to_prob']:
@@ -165,9 +165,9 @@ def valid_one_epoch(model, dataloader, use_meta, device, epoch, CONFIG):
 
         # Perform forward pass
         if use_meta:
-            outputs = model(images, meta)
+            outputs = model(images, meta).squeeze()
         else:
-            outputs = model(images)
+            outputs = model(images).squeeze()
         
         # Calculate loss
         loss = criterion(outputs, targets, pos_weight=CONFIG['pos_weight'], loss=CONFIG['loss'])
