@@ -79,7 +79,7 @@ def criterion(outputs, targets, pos_weight=20.0, loss='bce_with_logits'):
         else:
             return nn.BCEWithLogitsLoss()(outputs, targets)
     elif loss == 'focal':
-        return FocalLoss()(outputs, targets)
+        return FocalLoss(alpha=pos_weight)(outputs, targets)
     elif loss == 'pauc':
         return PAUCLoss()(targets, outputs)
     elif loss == 'mse':
