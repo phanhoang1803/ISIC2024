@@ -18,7 +18,7 @@ class ISICModel(nn.Module):
         
         self.model.classifier = nn.Identity()
         self.model.avgpool = nn.Identity()
-        self.pooling = nn.AdaptiveAvgPool2d((1, 1))
+        self.pooling = nn.AdaptiveAvgPool2d(1)
         self.linear = nn.Linear(self.output_dim, num_classes)
         self.sigmoid = nn.Sigmoid()
 
@@ -51,6 +51,6 @@ class ISICModel(nn.Module):
         
     def forward(self, images):
         features = self.model(images)
-        pooled_features = self.pooling(features).flatten(1)
+        pooled_features = self.pooling(features)
         output = self.sigmoid(self.linear(pooled_features))
         return output
