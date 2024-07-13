@@ -18,7 +18,7 @@ class ISICModel(nn.Module):
         
         self.model.classifier = nn.Identity()
         self.model.avgpool = nn.Identity()
-        self.pooling = GeM()
+        self.pooling = nn.AdaptiveAvgPool2d(1)
         self.linear = nn.Linear(self.output_dim, num_classes)
         self.sigmoid = nn.Sigmoid()
 
